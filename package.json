@@ -1,0 +1,19 @@
+{
+  "name": "webdav-s3",
+  "version": "1.0.0",
+  "description": "Simple WebDAV server that proxies through to S3",
+  "main": "lib/index.js",
+  "bin": {
+    "webdav-s3": "index.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Mike Morearty (https://github.com/mmorearty)",
+  "license": "ISC",
+  "dependencies": {
+    "aws-sdk": "^2.149.0",
+    "debug": "^3.1.0"
+  }
+}
