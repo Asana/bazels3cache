@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+#
+# Reads credentials from $CODEZ/info.yaml if present; then launches bin/webdav-s3
 
 read_info_yaml_property()
 {
@@ -14,4 +16,4 @@ if [[ -f $CODEZ/info.yaml ]]; then
 fi
 
 # "DEBUG=*" turns on logging. See https://www.npmjs.com/package/debug
-DEBUG=* bin/webdav-s3 --bucket asana-sandbox-bazel-cache
+DEBUG=* bin/webdav-s3 "$@"

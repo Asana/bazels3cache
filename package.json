@@ -14,6 +14,7 @@
   "license": "ISC",
   "dependencies": {
     "aws-sdk": "^2.149.0",
-    "debug": "^3.1.0"
+    "debug": "^3.1.0",
+    "minimist": "^1.2.0"
   }
 }

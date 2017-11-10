@@ -6,4 +6,4 @@
 
 ## Launching
 
-    ./start.sh
+    ./start
