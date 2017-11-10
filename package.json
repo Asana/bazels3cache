@@ -4,7 +4,7 @@
   "description": "Simple WebDAV server that proxies through to S3",
   "main": "lib/index.js",
   "bin": {
-    "webdav-s3": "index.js"
+    "webdav-s3": "bin/webdav-s3"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
