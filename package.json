@@ -1,20 +1,38 @@
 {
-  "name": "webdav-s3",
+  "name": "bazels3cache",
   "version": "1.0.0",
-  "description": "Simple WebDAV server that proxies through to S3",
-  "main": "lib/index.js",
+  "description": "Simple WebDAV server for caching Bazel artifacts in S3",
+  "main": "dist/index.js",
+  "files": [
+    "bin/**",
+    "dist/**",
+    "config.default.json"
+  ],
   "bin": {
-    "webdav-s3": "bin/webdav-s3"
+    "bazels3cache": "bin/bazels3cache"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc",
+    "prepare": "npm run build"
   },
   "keywords": [],
   "author": "Mike Morearty (https://github.com/mmorearty)",
   "license": "ISC",
   "dependencies": {
+    "@types/comment-json": "^1.1.0",
     "aws-sdk": "^2.149.0",
+    "comment-json": "^1.1.3",
     "debug": "^3.1.0",
-    "minimist": "^1.2.0"
+    "minimist": "^1.2.0",
+    "supports-color": "^5.0.0",
+    "winston": "^2.4.0"
+  },
+  "devDependencies": {
+    "@types/debug": "0.0.30",
+    "@types/minimist": "^1.2.0",
+    "@types/node": "^8.0.51",
+    "@types/winston": "^2.3.7",
+    "typescript": "^2.6.1"
   }
 }

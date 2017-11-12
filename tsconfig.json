@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "outDir": "dist",
+    "lib": ["es2015", "es2015.promise"],
+    "noImplicitAny": true
+  },
+  "include": [
+    "src/**/*.ts"
+  ]
+}

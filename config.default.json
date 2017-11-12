@@ -1,0 +1,22 @@
+// comments are allowed in this json file
+{
+  "port": 7777,
+  "bucket": null, // specify this on command line or in another config file
+  "idleMinutes": 30,
+  "allowOffline": true,
+  "errorsBeforePausing": 10,
+  "pauseMinutes": 5,
+
+  "cache": {
+    "enabled": true,
+    "maxEntrySizeBytes": 1000000,
+    "maxTotalSizeBytes": 50000000 // be careful, this is an in-memory cache
+  },
+
+  "logging": {
+    // "info" will log infos, warnings, and errors
+    // To also log the full JSON of all S3 errors, use "verbose"
+    "level": "info",
+    "file": "/tmp/bazels3cache.log"
+  }
+}
