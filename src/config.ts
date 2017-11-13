@@ -2,24 +2,18 @@ import * as path from "path";
 import * as fs from "fs";
 import * as commentJson from "comment-json";
 
+// Command line arguments
 export interface Args {
-    config?: string;
+    config?: string; // "--config=myconfig.json"
 
-    // port?: number;
-    // "idle-minutes"?: number;
-    // bucket?: string;
-    // "allow-offline"?: boolean;
-    // "errors-before-pausing"?: number;
-    // "pause-minutes"?: number;
-
-    // "cache-enabled"?: boolean;
-    // "cache-max-entry-size-bytes"?: number;
-    // "cache-max-total-size-bytes"?: number;
-
-    // "log-level"?: string;
-    // "log-file"?: string;
+    // Other keys are allowed to mirror values from `Config` below. E.g.
+    // --port=123 --bucket=foo
+    [key: string]: string | number | boolean;
 }
 
+// Fields that we recognize from ../config.default.json, any user-specified
+// config file (e.g. --config=myconfig.json), and any command-line arguments
+// (e.g. --cache.maxEntrySizeBytes=1234)
 export interface Config {
     port?: number;
     idleMinutes?: number;

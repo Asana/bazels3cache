@@ -25,39 +25,28 @@ export class Cache {
 
     get(s3key: string) {
         const node = this.entries[s3key];
-        return node ? node.buffer : null;
-    }
-
-    private deleteNode(node: CacheNode) {
-        if (node.prev) { node.prev.next = node.next; } else { this.head = node.next; }
-        if (node.next) { node.next.prev = node.prev; } else { this.tail = node.prev; }
-        this.size -= node.buffer.byteLength;
-        delete this.entries[node.s3key];
-        debugCache(`Removed ${node.s3key} size=${node.buffer.byteLength}, total size = ${this.size}`);
+        if (node) {
+            this._moveNodeToHead(node);
+            return node.buffer;
+        } else {
+            return null;
+        }
     }
 
     delete(s3key: string) {
         if (this.entries.hasOwnProperty(s3key)) {
-            this.deleteNode(this.entries[s3key]);
+            this._deleteNode(this.entries[s3key]);
             return true;
         } else {
             return false;
         }
     }
 
-    private makeSpace(newItemLength: number) {
-        if (this.config.cache.enabled) {
-            while (this.size > 0 && this.size + newItemLength > this.config.cache.maxTotalSizeBytes) {
-                this.deleteNode(this.tail);
-            }
-        }
-    }
-
-    public maybeAdd(s3key: string, buffer: Buffer) {
+    maybeAdd(s3key: string, buffer: Buffer) {
         if (this.config.cache.enabled) {
             this.delete(s3key);
             if (buffer.byteLength < this.config.cache.maxEntrySizeBytes) {
-                this.makeSpace(buffer.byteLength);
+                this._makeSpace(buffer.byteLength);
                 const node: CacheNode = {
                     s3key: s3key,
                     buffer: buffer,
@@ -72,5 +61,26 @@ export class Cache {
                 debugCache(`Added ${s3key} size=${buffer.byteLength}, total size = ${this.size}`);
             }
         }
+    }
+
+    private _makeSpace(newItemLength: number) {
+        if (this.config.cache.enabled) {
+            while (this.size > 0 && this.size + newItemLength > this.config.cache.maxTotalSizeBytes) {
+                this._deleteNode(this.tail);
+            }
+        }
+    }
+
+    private _moveNodeToHead(node: CacheNode) {
+        this._deleteNode(node);
+        this.maybeAdd(node.s3key, node.buffer);
+    }
+
+    private _deleteNode(node: CacheNode) {
+        if (node.prev) { node.prev.next = node.next; } else { this.head = node.next; }
+        if (node.next) { node.next.prev = node.prev; } else { this.tail = node.prev; }
+        this.size -= node.buffer.byteLength;
+        delete this.entries[node.s3key];
+        debugCache(`Removed ${node.s3key} size=${node.buffer.byteLength}, total size = ${this.size}`);
     }
 }
