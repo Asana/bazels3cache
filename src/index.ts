@@ -134,12 +134,29 @@ function startServer(s3: AWS.S3, config: Config) {
         awsErrors = 0;
     }
 
+    function shutdown(logMessage: string) {
+        if (logMessage) {
+            winston.info(`Idle for ${config.idleMinutes} minutes; terminating`);
+        }
+        if (idleTimer) {
+            clearTimeout(idleTimer);
+            idleTimer = undefined;
+        }
+        if (awsPauseTimer) {
+            clearTimeout(awsPauseTimer);
+            awsPauseTimer = undefined;
+        }
+        server.close();
+    }
+
     const server = http.createServer((req: http.ServerRequest, res: http.ServerResponse) => {
         if (idleTimer) {
             clearTimeout(idleTimer);
         }
         if (config.idleMinutes) {
-            idleTimer = setTimeout(() => server.close(), config.idleMinutes * 60 * 1000);
+            idleTimer = setTimeout(() => {
+                shutdown(`Idle for ${config.idleMinutes} minutes; terminating`);
+            }, config.idleMinutes * 60 * 1000);
         }
 
         const startTime = new Date();
@@ -150,16 +167,8 @@ function startServer(s3: AWS.S3, config: Config) {
                 if (s3key === "ping") {
                     sendResponse(req, res, "pong", { startTime, awsPaused });
                 } else if (s3key === "shutdown") {
-                    if (idleTimer) {
-                        clearTimeout(idleTimer);
-                        idleTimer = undefined;
-                    }
-                    if (awsPauseTimer) {
-                        clearTimeout(awsPauseTimer);
-                        awsPauseTimer = undefined;
-                    }
-                    server.close();
                     sendResponse(req, res, "shutting down", { startTime, awsPaused });
+                    shutdown("Received 'GET /shutdown'; terminating");
                 } else if (cache.contains(s3key)) {
                     // we already have it in our in-memory cache
                     sendResponse(req, res, cache.get(s3key), {

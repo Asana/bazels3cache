@@ -4,6 +4,20 @@
 `HEAD`, and `DELETE`), and proxies those requests through to S3. We use it with
 `bazel --remote_rest_cache=...`, so that we can use S3 for our Bazel cache.
 
+## I'm in a hurry, just tell me the basics!
+
+Okay:
+
+*   Now, when you run `bzl`, that script first runs `bazels3cache`, then Bazel.
+*   `bazels3cache` listens on localhost:7777
+*   You can see its log here: `/tmp/bazels3cache.log`
+*   In that log, `starting` means `bazels3cache` started; `terminating with
+    exit code <n>` means it terminated.
+*   After 30 minutes of idle (no requests), it terminates automatically.
+*   To make it terminate: `bzl shutdown` or `curl http://localhost:7777/shutdown`
+
+## I have all day, tell me more!
+
 Bazel actually uses the cache only as [Content-addressable
 storage](https://en.wikipedia.org/wiki/Content-addressable_storage) (CAS). What
 this means is that the "key" (in this case, the URL) of any entry in the cache
