@@ -11,7 +11,7 @@ interface CacheNode {
 }
 
 export class Cache {
-    private size: number = 0;
+    private size = 0;
     private head?: CacheNode; // the newest element in the cache
     private tail?: CacheNode; // the oldest
     private entries: { [s3key: string]: CacheNode } = {};
@@ -47,8 +47,8 @@ export class Cache {
             if (buffer.byteLength < this.config.maxEntrySizeBytes) {
                 this._makeSpace(buffer.byteLength);
                 const node: CacheNode = {
-                    s3key,
-                    buffer,
+                    s3key: s3key,
+                    buffer: buffer,
                     next: this.head
                 };
                 if (node.next) {

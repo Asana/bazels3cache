@@ -188,9 +188,8 @@ export function startServer(s3: S3, config: Config) {
 
                     s3request
                         .then(data => {
-                            cache.maybeAdd(s3key, data.Body as Buffer); // safe cast?
-                            sendResponse(req, res, data.Body as Buffer, {
-                                // safe cast?
+                            cache.maybeAdd(s3key, <Buffer>data.Body); // safe cast?
+                            sendResponse(req, res, <Buffer>data.Body /* safe cast? */, {
                                 startTime,
                                 awsPaused
                             });

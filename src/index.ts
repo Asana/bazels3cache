@@ -1,11 +1,8 @@
 import * as AWS from "aws-sdk";
-import * as debug_ from "debug";
 import * as minimist from "minimist";
 import * as winston from "winston";
 import { Args, Config, getConfig, validateConfig } from "./config";
 import { startServer } from "./server";
-
-const debug = debug_("bazels3cache");
 
 function initLogging(config: Config) {
     winston.configure({
@@ -48,7 +45,7 @@ function main(args: Args) {
             AWS.config.credentials = credentials;
             const s3 = new AWS.S3({
                 apiVersion: "2006-03-01",
-                credentials
+                credentials: credentials
             });
             startServer(s3, config);
         })
