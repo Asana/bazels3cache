@@ -13,8 +13,7 @@
     "no-angle-bracket-type-assertion": false,
     "only-arrow-functions": false,
     "member-access": false,
-    "object-literal-shorthand": false,
-    "curly": false
+    "object-literal-shorthand": false
   },
   "rulesDirectory": []
 }

@@ -52,9 +52,13 @@ export class Cache {
                     prev: null,
                     next: this.head
                 };
-                if (node.next) node.next.prev = node;
+                if (node.next) {
+                    node.next.prev = node;
+                }
                 this.head = node;
-                if (!this.tail) this.tail = node;
+                if (!this.tail) {
+                    this.tail = node;
+                }
                 this.entries[s3key] = node;
                 this.size += buffer.byteLength;
                 debugCache(`Added ${s3key} size=${buffer.byteLength}, total size = ${this.size}`);
