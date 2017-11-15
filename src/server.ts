@@ -1,6 +1,6 @@
-import * as AWS from "aws-sdk";
+import { AWSError, S3 } from "aws-sdk";
 import * as debug_ from "debug";
-import * as http from "http";
+import { createServer, ServerRequest, ServerResponse } from "http";
 import * as winston from "winston";
 import { Config } from "./config";
 import { Cache } from "./memorycache";
@@ -17,20 +17,16 @@ enum StatusCode {
 
 const hostname = "localhost";
 
-function isIgnorableError(err: AWS.AWSError) {
+function isIgnorableError(err: AWSError) {
     // TODO add a comment explaining this
     return err.retryable === true;
 }
 
-function shouldIgnoreError(err: AWS.AWSError, config: Config) {
+function shouldIgnoreError(err: AWSError, config: Config) {
     return config.allowOffline && isIgnorableError(err);
 }
 
-function getHttpResponseStatusCode(
-    err: AWS.AWSError,
-    codeIfIgnoringError: StatusCode,
-    config: Config
-) {
+function getHttpResponseStatusCode(err: AWSError, codeIfIgnoringError: StatusCode, config: Config) {
     if (shouldIgnoreError(err, config)) {
         return codeIfIgnoringError;
     } else {
@@ -39,8 +35,8 @@ function getHttpResponseStatusCode(
 }
 
 function prepareErrorResponse(
-    res: http.ServerResponse,
-    err: AWS.AWSError,
+    res: ServerResponse,
+    err: AWSError,
     codeIfIgnoringError: StatusCode,
     config: Config
 ) {
@@ -50,8 +46,8 @@ function prepareErrorResponse(
 }
 
 function logProps(
-    req: http.ServerRequest,
-    res: http.ServerResponse,
+    req: ServerRequest,
+    res: ServerResponse,
     attrs: {
         startTime: Date;
         responseLength: number;
@@ -78,8 +74,8 @@ function logProps(
 }
 
 function sendResponse(
-    req: http.ServerRequest,
-    res: http.ServerResponse,
+    req: ServerRequest,
+    res: ServerResponse,
     body: Buffer | string | null,
     attrs: {
         startTime: Date;
@@ -105,14 +101,14 @@ function sendResponse(
     res.end.apply(res, body ? [body] : []);
 }
 
-export function startServer(s3: AWS.S3, config: Config) {
+export function startServer(s3: S3, config: Config) {
     const cache = new Cache(config.cache); // in-memory cache
     let idleTimer: NodeJS.Timer | undefined;
     let awsPauseTimer: NodeJS.Timer | undefined;
     let awsErrors = 0;
     let awsPaused = false;
 
-    function onAWSError(req: http.ServerRequest, s3error: AWS.AWSError) {
+    function onAWSError(req: ServerRequest, s3error: AWSError) {
         const message = `${req.method} ${req.url}: ${s3error.message || s3error.code}`;
         debug(message);
         winston.error(message);
@@ -152,7 +148,7 @@ export function startServer(s3: AWS.S3, config: Config) {
         server.close();
     }
 
-    const server = http.createServer((req: http.ServerRequest, res: http.ServerResponse) => {
+    const server = createServer((req: ServerRequest, res: ServerResponse) => {
         if (idleTimer) {
             clearTimeout(idleTimer);
         }
@@ -200,7 +196,7 @@ export function startServer(s3: AWS.S3, config: Config) {
                             });
                             onAWSSuccess();
                         })
-                        .catch((err: AWS.AWSError) => {
+                        .catch((err: AWSError) => {
                             // 404 is not an error; it just means we successfully talked to S3
                             // and S3 told us there was no such item.
                             if (err.statusCode === StatusCode.NotFound) {
@@ -249,7 +245,7 @@ export function startServer(s3: AWS.S3, config: Config) {
                                     sendResponse(req, res, null, { startTime, awsPaused });
                                     onAWSSuccess();
                                 })
-                                .catch((err: AWS.AWSError) => {
+                                .catch((err: AWSError) => {
                                     onAWSError(req, err);
                                     // If the error is an ignorable one (e.g. the user is offline), then
                                     // return 200 OK -- pretend the PUT succeeded.
@@ -281,7 +277,7 @@ export function startServer(s3: AWS.S3, config: Config) {
                             sendResponse(req, res, null, { startTime, awsPaused });
                             onAWSSuccess();
                         })
-                        .catch((err: AWS.AWSError) => {
+                        .catch((err: AWSError) => {
                             onAWSError(req, err);
                             // If the error is an ignorable one (e.g. the user is offline), then
                             // return 404 Not Found.
