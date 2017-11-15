@@ -193,8 +193,8 @@ function startServer(s3: AWS.S3, config: Config) {
 
                     s3request
                         .then(data => {
-                            cache.maybeAdd(s3key, <Buffer>data.Body); // safe cast?
-                            sendResponse(req, res, <Buffer>data.Body, {
+                            cache.maybeAdd(s3key, data.Body as Buffer); // safe cast?
+                            sendResponse(req, res, data.Body as Buffer, {
                                 // safe cast?
                                 startTime,
                                 awsPaused

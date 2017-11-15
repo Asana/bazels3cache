@@ -88,10 +88,10 @@ export function getConfig(args: Args): Config {
         ? commentJson.parse(fs.readFileSync(args.config, "utf8"))
         : {};
 
-    const config = <Config>{
+    const config = {
         ...defaultConfig,
         ...configFileContents
-    };
+    } as Config;
 
     const merged = merge(config, args);
 
