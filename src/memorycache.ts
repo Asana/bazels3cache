@@ -8,7 +8,7 @@ interface CacheNode {
     buffer: Buffer;
     prev: CacheNode;
     next: CacheNode;
-};
+}
 
 export class Cache {
     size: number = 0;
@@ -16,8 +16,7 @@ export class Cache {
     tail: CacheNode = null; // the oldest
     entries: { [s3key: string]: CacheNode } = {};
 
-    constructor(private config: Config) {
-    }
+    constructor(private config: Config) {}
 
     contains(s3key: string) {
         return this.entries.hasOwnProperty(s3key);
@@ -65,7 +64,10 @@ export class Cache {
 
     private _makeSpace(newItemLength: number) {
         if (this.config.cache.enabled) {
-            while (this.size > 0 && this.size + newItemLength > this.config.cache.maxTotalSizeBytes) {
+            while (
+                this.size > 0 &&
+                this.size + newItemLength > this.config.cache.maxTotalSizeBytes
+            ) {
                 this._deleteNode(this.tail);
             }
         }
@@ -77,10 +79,20 @@ export class Cache {
     }
 
     private _deleteNode(node: CacheNode) {
-        if (node.prev) { node.prev.next = node.next; } else { this.head = node.next; }
-        if (node.next) { node.next.prev = node.prev; } else { this.tail = node.prev; }
+        if (node.prev) {
+            node.prev.next = node.next;
+        } else {
+            this.head = node.next;
+        }
+        if (node.next) {
+            node.next.prev = node.prev;
+        } else {
+            this.tail = node.prev;
+        }
         this.size -= node.buffer.byteLength;
         delete this.entries[node.s3key];
-        debugCache(`Removed ${node.s3key} size=${node.buffer.byteLength}, total size = ${this.size}`);
+        debugCache(
+            `Removed ${node.s3key} size=${node.buffer.byteLength}, total size = ${this.size}`
+        );
     }
 }
