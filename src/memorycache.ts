@@ -6,14 +6,14 @@ const debugCache = debug_("bazels3cache:cache");
 interface CacheNode {
     s3key: string;
     buffer: Buffer;
-    prev?: CacheNode;
-    next?: CacheNode;
+    prev: CacheNode | null;
+    next: CacheNode | null;
 }
 
 export class Cache {
     private size = 0;
-    private head?: CacheNode; // the newest element in the cache
-    private tail?: CacheNode; // the oldest
+    private head: CacheNode | null = null; // the newest element in the cache
+    private tail: CacheNode | null = null; // the oldest
     private entries: { [s3key: string]: CacheNode } = {};
 
     constructor(private config: CacheConfig) {}
@@ -49,7 +49,8 @@ export class Cache {
                 const node: CacheNode = {
                     s3key: s3key,
                     buffer: buffer,
-                    next: this.head
+                    next: this.head,
+                    prev: null
                 };
                 if (node.next) {
                     node.next.prev = node;
