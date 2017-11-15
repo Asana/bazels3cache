@@ -33,6 +33,15 @@
     "@types/minimist": "^1.2.0",
     "@types/node": "^8.0.51",
     "@types/winston": "^2.3.7",
+    "prettier": "^1.8.2",
+    "tslint": "^5.8.0",
+    "tslint-config-prettier": "^1.6.0",
     "typescript": "^2.6.1"
+  },
+  "prettier": {
+    "tabWidth": 4,
+    "printWidth": 120,
+    "ignorePath": ".prettierignore",
+    "trailingComma": "es5"
   }
 }
