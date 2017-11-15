@@ -13,8 +13,8 @@ enum StatusCode {
     OK = 200,
     Forbidden = 403,
     NotFound = 404,
-    MethodNotAllowed = 405,
-};
+    MethodNotAllowed = 405
+}
 
 const hostname = "localhost";
 
@@ -22,14 +22,14 @@ function logProps(
     req: http.ServerRequest,
     res: http.ServerResponse,
     attrs: {
-        startTime: Date,
-        responseLength: number,
-        fromCache?: boolean,
-        awsPaused: boolean
+        startTime: Date;
+        responseLength: number;
+        fromCache?: boolean;
+        awsPaused: boolean;
     }
 ) {
     const endTime = new Date();
-    const elapsedMillis = (endTime.getTime() - attrs.startTime.getTime());
+    const elapsedMillis = endTime.getTime() - attrs.startTime.getTime();
     const loglineItems = [
         req.method,
         req.url,
@@ -38,9 +38,9 @@ function logProps(
         `${elapsedMillis}ms`,
         attrs.fromCache && "(from cache)",
         attrs.awsPaused && "(aws paused)"
-    ]
+    ];
     const logline = loglineItems
-        .filter(item => ["string","number"].indexOf(typeof item) !== -1)
+        .filter(item => ["string", "number"].indexOf(typeof item) !== -1)
         .join(" ");
     debug(logline);
     winston.info(logline);
@@ -51,9 +51,9 @@ function sendResponse(
     res: http.ServerResponse,
     body: Buffer | string,
     attrs: {
-        startTime: Date,
-        fromCache?: boolean,
-        awsPaused: boolean
+        startTime: Date;
+        fromCache?: boolean;
+        awsPaused: boolean;
     }
 ) {
     let responseLength: number;
@@ -119,7 +119,11 @@ function startServer(s3: AWS.S3, config: Config) {
         winston.error(message);
         winston.verbose(JSON.stringify(s3error, null, "  "));
         if (++awsErrors >= config.errorsBeforePausing) {
-            winston.warn(`Encountered ${awsErrors} consecutive AWS errors; pausing AWS access for ${config.pauseMinutes} minutes`);
+            winston.warn(
+                `Encountered ${awsErrors} consecutive AWS errors; pausing AWS access for ${
+                    config.pauseMinutes
+                } minutes`
+            );
             awsPaused = true;
             awsPauseTimer = setTimeout(() => {
                 winston.warn("Unpausing AWS access; attempting to resume normal caching");
@@ -180,15 +184,18 @@ function startServer(s3: AWS.S3, config: Config) {
                     res.statusCode = StatusCode.NotFound;
                     sendResponse(req, res, null, { startTime, awsPaused });
                 } else {
-                    const s3request = s3.getObject({
-                         Bucket: config.bucket,
-                         Key: s3key
-                    }).promise();
+                    const s3request = s3
+                        .getObject({
+                            Bucket: config.bucket,
+                            Key: s3key
+                        })
+                        .promise();
 
                     s3request
                         .then(data => {
                             cache.maybeAdd(s3key, <Buffer>data.Body); // safe cast?
-                            sendResponse(req, res, <Buffer>data.Body, { // safe cast?
+                            sendResponse(req, res, <Buffer>data.Body, {
+                                // safe cast?
                                 startTime,
                                 awsPaused
                             });
@@ -227,15 +234,17 @@ function startServer(s3: AWS.S3, config: Config) {
                             res.statusCode = StatusCode.OK;
                             sendResponse(req, res, null, { startTime, awsPaused });
                         } else {
-                            const s3request = s3.putObject({
-                                Bucket: config.bucket,
-                                Key: s3key,
-                                Body: fullBody,
-                                // Very important: The bucket owner needs full control of the uploaded
-                                // object, so that they can share the object with all the appropriate
-                                // users
-                                ACL: "bucket-owner-full-control"
-                            }).promise();
+                            const s3request = s3
+                                .putObject({
+                                    Bucket: config.bucket,
+                                    Key: s3key,
+                                    Body: fullBody,
+                                    // Very important: The bucket owner needs full control of the uploaded
+                                    // object, so that they can share the object with all the appropriate
+                                    // users
+                                    ACL: "bucket-owner-full-control"
+                                })
+                                .promise();
                             s3request
                                 .then(() => {
                                     sendResponse(req, res, null, { startTime, awsPaused });
@@ -261,10 +270,12 @@ function startServer(s3: AWS.S3, config: Config) {
                     res.statusCode = StatusCode.NotFound;
                     sendResponse(req, res, null, { startTime, awsPaused });
                 } else {
-                    const s3request = s3.headObject({
-                         Bucket: config.bucket,
-                         Key: s3key
-                    }).promise();
+                    const s3request = s3
+                        .headObject({
+                            Bucket: config.bucket,
+                            Key: s3key
+                        })
+                        .promise();
 
                     s3request
                         .then(data => {
@@ -289,7 +300,7 @@ function startServer(s3: AWS.S3, config: Config) {
         }
     });
 
-    server.on("error", (e) => {
+    server.on("error", e => {
         const message = `could not start server: ${e.message}`;
         winston.error(message);
         console.error(`bazels3cache: ${message}`);
@@ -307,12 +318,12 @@ function initLogging(config: Config) {
     winston.configure({
         level: config.logging.level,
         transports: [
-            new (winston.transports.File)({
+            new winston.transports.File({
                 filename: config.logging.file,
                 json: false
             })
         ],
-        padLevels: true,
+        padLevels: true
     });
 }
 
@@ -329,15 +340,16 @@ function main(args: Args) {
     }
 
     winston.info("starting");
-    process.on("exit", (exitCode) => winston.info(`terminating with exit code ${exitCode}`));
-    process.on('uncaughtException', function (err) {
+    process.on("exit", exitCode => winston.info(`terminating with exit code ${exitCode}`));
+    process.on("uncaughtException", function(err) {
         console.error("bazels3cache: Uncaught exception:", err);
         winston.error(`bazels3cache: Uncaught exception: ${err}`);
         process.exit(1); // hard stop
     });
 
     const chain = new AWS.CredentialProviderChain(null);
-    chain.resolvePromise()
+    chain
+        .resolvePromise()
         .then(credentials => {
             AWS.config.credentials = credentials;
             const s3 = new AWS.S3({

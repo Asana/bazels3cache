@@ -26,12 +26,12 @@ export interface Config {
         enabled: boolean;
         maxEntrySizeBytes: number;
         maxTotalSizeBytes: number;
-    }
+    };
 
     logging?: {
         level?: string;
         file?: string;
-    }
+    };
 }
 
 // Merges zero or more JSON objects.
@@ -71,8 +71,8 @@ function merge(...sources: any[]) {
             } else {
                 target[key] = value;
             }
-        })
-    })
+        });
+    });
     return target;
 }
 
@@ -84,11 +84,11 @@ export function getConfig(args: Args): Config {
     const configJsonText = fs.readFileSync(pth, "utf8");
     const defaultConfig: Config = commentJson.parse(configJsonText);
 
-    const configFileContents: Config = (args.config)
+    const configFileContents: Config = args.config
         ? commentJson.parse(fs.readFileSync(args.config, "utf8"))
         : {};
 
-    const config = <Config> {
+    const config = <Config>{
         ...defaultConfig,
         ...configFileContents
     };
@@ -106,7 +106,9 @@ export function validateConfig(config: Config): string {
     }
 
     if (config.cache.maxEntrySizeBytes > config.cache.maxTotalSizeBytes) {
-        return `max entry size (${config.cache.maxEntrySizeBytes}) must be <= max total size (${config.cache.maxTotalSizeBytes})`;
+        return `max entry size (${config.cache.maxEntrySizeBytes}) must be <= max total size (${
+            config.cache.maxTotalSizeBytes
+        })`;
     }
 
     return null;
