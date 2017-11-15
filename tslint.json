@@ -11,8 +11,7 @@
     "no-console": false,
     "ordered-imports": false,
     "no-angle-bracket-type-assertion": false,
-    "only-arrow-functions": false,
-    "member-access": false
+    "only-arrow-functions": false
   },
   "rulesDirectory": []
 }
