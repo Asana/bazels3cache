@@ -1,6 +1,6 @@
-import * as path from "path";
-import * as fs from "fs";
 import * as commentJson from "comment-json";
+import * as fs from "fs";
+import * as path from "path";
 
 // Command line arguments
 export interface Args {

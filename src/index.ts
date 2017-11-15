@@ -1,6 +1,6 @@
-import * as http from "http";
 import * as AWS from "aws-sdk";
 import * as debug_ from "debug";
+import * as http from "http";
 import * as minimist from "minimist";
 import * as winston from "winston";
 import { Args, Config, getConfig, validateConfig } from "./config";
