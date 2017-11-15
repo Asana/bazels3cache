@@ -3,12 +3,16 @@
     "version": "1.0.0",
     "description": "Simple WebDAV server for caching Bazel artifacts in S3",
     "main": "dist/index.js",
-    "files": ["bin/**", "dist/**", "config.default.json"],
+    "files": [
+        "bin/**",
+        "dist/**",
+        "config.default.json"
+    ],
     "bin": {
         "bazels3cache": "bin/bazels3cache"
     },
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1",
+        "test": "mocha -r ts-node/register src/**/*_test.ts",
         "build": "tsc",
         "lint": "tslint --project . --fix && prettier --write src/*.ts",
         "prepare": "npm run build"
@@ -26,11 +30,16 @@
         "winston": "^2.4.0"
     },
     "devDependencies": {
+        "@types/chai": "^4.0.4",
         "@types/debug": "0.0.30",
         "@types/minimist": "^1.2.0",
+        "@types/mocha": "^2.2.44",
         "@types/node": "^8.0.51",
         "@types/winston": "^2.3.7",
+        "chai": "^4.1.2",
+        "mocha": "^4.0.1",
         "prettier": "^1.8.2",
+        "ts-node": "^3.3.0",
         "tslint": "^5.8.0",
         "tslint-config-prettier": "^1.6.0",
         "typescript": "^2.6.1"

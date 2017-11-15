@@ -105,7 +105,7 @@ function sendResponse(
     res.end.apply(res, body ? [body] : []);
 }
 
-export function startServer(s3: AWS.S3, config: Config) {
+export async function startServer(s3: AWS.S3, config: Config): Promise<http.Server> {
     const cache = new Cache(config.cache); // in-memory cache
     let idleTimer: NodeJS.Timer | undefined;
     let awsPauseTimer: NodeJS.Timer | undefined;
@@ -139,15 +139,7 @@ export function startServer(s3: AWS.S3, config: Config) {
 
     function shutdown(logMessage: string) {
         if (logMessage) {
-            winston.info(`Idle for ${config.idleMinutes} minutes; terminating`);
-        }
-        if (idleTimer) {
-            clearTimeout(idleTimer);
-            idleTimer = undefined;
-        }
-        if (awsPauseTimer) {
-            clearTimeout(awsPauseTimer);
-            awsPauseTimer = undefined;
+            winston.info(logMessage);
         }
         server.close();
     }
@@ -191,13 +183,18 @@ export function startServer(s3: AWS.S3, config: Config) {
                         .promise();
 
                     s3request
-                        .then(data => {
-                            cache.maybeAdd(s3key, <Buffer>data.Body); // safe cast?
-                            sendResponse(req, res, <Buffer>data.Body /* safe cast? */, {
-                                startTime,
-                                awsPaused
-                            });
-                            onAWSSuccess();
+                        .then(response => {
+                            const data = response.Body;
+                            if (data instanceof Buffer) {
+                                cache.maybeAdd(s3key, data);
+                                sendResponse(req, res, data, {
+                                    startTime,
+                                    awsPaused
+                                });
+                                onAWSSuccess();
+                            } else {
+                                debug("Expected a Buffer but got ", data);
+                            }
                         })
                         .catch((err: AWS.AWSError) => {
                             // 404 is not an error; it just means we successfully talked to S3
@@ -298,16 +295,31 @@ export function startServer(s3: AWS.S3, config: Config) {
         }
     });
 
-    server.on("error", e => {
-        const message = `could not start server: ${e.message}`;
-        winston.error(message);
-        console.error(`bazels3cache: ${message}`);
-        process.exitCode = 1;
+    server.on("close", () => {
+        if (idleTimer) {
+            clearTimeout(idleTimer);
+            idleTimer = undefined;
+        }
+        if (awsPauseTimer) {
+            clearTimeout(awsPauseTimer);
+            awsPauseTimer = undefined;
+        }
     });
 
-    server.listen(config.port, hostname, () => {
-        debug(`started server at http://${hostname}:${config.port}/`);
-        winston.info(`started server at http://${hostname}:${config.port}/`);
-        console.log(`bazels3cache: server running at http://${hostname}:${config.port}/`);
+    return new Promise<http.Server>((resolve, reject) => {
+        server.on("error", e => {
+            const message = `could not start server: ${e.message}`;
+            winston.error(message);
+            console.error(`bazels3cache: ${message}`);
+            process.exitCode = 1;
+            reject(e);
+        });
+
+        server.listen(config.port, hostname, () => {
+            debug(`started server at http://${hostname}:${config.port}/`);
+            winston.info(`started server at http://${hostname}:${config.port}/`);
+            console.log(`bazels3cache: server running at http://${hostname}:${config.port}/`);
+            resolve(server);
+        });
     });
 }

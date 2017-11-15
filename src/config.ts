@@ -89,7 +89,7 @@ export function getConfig(args: Args): Config {
         ? commentJson.parse(fs.readFileSync(args.config, "utf8"))
         : {};
 
-    const config = <Config>{
+    const config: Config = {
         ...defaultConfig,
         ...configFileContents
     };
