@@ -1,28 +1,28 @@
 import * as debug_ from "debug";
-import { Config } from "./config";
+import { CacheConfig } from "./config";
 
 const debugCache = debug_("bazels3cache:cache");
 
 interface CacheNode {
     s3key: string;
     buffer: Buffer;
-    prev: CacheNode;
-    next: CacheNode;
+    prev?: CacheNode;
+    next?: CacheNode;
 }
 
 export class Cache {
     private size: number = 0;
-    private head: CacheNode = null; // the newest element in the cache
-    private tail: CacheNode = null; // the oldest
+    private head?: CacheNode; // the newest element in the cache
+    private tail?: CacheNode; // the oldest
     private entries: { [s3key: string]: CacheNode } = {};
 
-    constructor(private config: Config) {}
+    constructor(private config: CacheConfig) {}
 
-    public contains(s3key: string) {
+    public contains(s3key: string): boolean {
         return this.entries.hasOwnProperty(s3key);
     }
 
-    public get(s3key: string) {
+    public get(s3key: string): Buffer | null {
         const node = this.entries[s3key];
         if (node) {
             this._moveNodeToHead(node);
@@ -32,7 +32,7 @@ export class Cache {
         }
     }
 
-    public delete(s3key: string) {
+    public delete(s3key: string): boolean {
         if (this.entries.hasOwnProperty(s3key)) {
             this._deleteNode(this.entries[s3key]);
             return true;
@@ -41,15 +41,14 @@ export class Cache {
         }
     }
 
-    public maybeAdd(s3key: string, buffer: Buffer) {
-        if (this.config.cache.enabled) {
+    public maybeAdd(s3key: string, buffer: Buffer): void {
+        if (this.config.enabled) {
             this.delete(s3key);
-            if (buffer.byteLength < this.config.cache.maxEntrySizeBytes) {
+            if (buffer.byteLength < this.config.maxEntrySizeBytes) {
                 this._makeSpace(buffer.byteLength);
                 const node: CacheNode = {
                     s3key,
                     buffer,
-                    prev: null,
                     next: this.head
                 };
                 if (node.next) {
@@ -67,11 +66,8 @@ export class Cache {
     }
 
     private _makeSpace(newItemLength: number) {
-        if (this.config.cache.enabled) {
-            while (
-                this.size > 0 &&
-                this.size + newItemLength > this.config.cache.maxTotalSizeBytes
-            ) {
+        if (this.config.enabled) {
+            while (this.tail && this.size + newItemLength > this.config.maxTotalSizeBytes) {
                 this._deleteNode(this.tail);
             }
         }

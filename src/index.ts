@@ -40,10 +40,11 @@ function main(args: Args) {
         process.exit(1); // hard stop
     });
 
-    const chain = new AWS.CredentialProviderChain(null);
+    // TODO: comment explaining why we don't pass providers
+    const chain = new AWS.CredentialProviderChain(null as any);
     chain
         .resolvePromise()
-        .then(credentials => {
+        .then((credentials: AWS.Credentials) => {
             AWS.config.credentials = credentials;
             const s3 = new AWS.S3({
                 apiVersion: "2006-03-01",
