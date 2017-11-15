@@ -341,7 +341,7 @@ function main(args: Args) {
 
     winston.info("starting");
     process.on("exit", exitCode => winston.info(`terminating with exit code ${exitCode}`));
-    process.on("uncaughtException", function(err) {
+    process.on("uncaughtException", err => {
         console.error("bazels3cache: Uncaught exception:", err);
         winston.error(`bazels3cache: Uncaught exception: ${err}`);
         process.exit(1); // hard stop
