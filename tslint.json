@@ -8,14 +8,7 @@
   "rules": {
     "interface-name": false,
     "object-literal-sort-keys": false,
-    "no-console": false,
-    "ordered-imports": false,
-    "no-angle-bracket-type-assertion": false,
-    "only-arrow-functions": false,
-    "member-access": false,
-    "object-literal-shorthand": false,
-    "curly": false,
-    "prefer-const": false
+    "no-console": false
   },
   "rulesDirectory": []
 }

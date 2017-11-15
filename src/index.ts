@@ -1,6 +1,6 @@
-import * as http from "http";
 import * as AWS from "aws-sdk";
 import * as debug_ from "debug";
+import * as http from "http";
 import * as minimist from "minimist";
 import * as winston from "winston";
 import { Args, Config, getConfig, validateConfig } from "./config";
@@ -193,8 +193,8 @@ function startServer(s3: AWS.S3, config: Config) {
 
                     s3request
                         .then(data => {
-                            cache.maybeAdd(s3key, <Buffer>data.Body); // safe cast?
-                            sendResponse(req, res, <Buffer>data.Body, {
+                            cache.maybeAdd(s3key, data.Body as Buffer); // safe cast?
+                            sendResponse(req, res, data.Body as Buffer, {
                                 // safe cast?
                                 startTime,
                                 awsPaused
@@ -223,7 +223,7 @@ function startServer(s3: AWS.S3, config: Config) {
                     res.statusCode = StatusCode.Forbidden;
                     sendResponse(req, res, null, { startTime, awsPaused });
                 } else {
-                    let body: Buffer[] = [];
+                    const body: Buffer[] = [];
                     req.on("data", (chunk: Buffer) => {
                         body.push(chunk);
                     });
@@ -341,7 +341,7 @@ function main(args: Args) {
 
     winston.info("starting");
     process.on("exit", exitCode => winston.info(`terminating with exit code ${exitCode}`));
-    process.on("uncaughtException", function(err) {
+    process.on("uncaughtException", err => {
         console.error("bazels3cache: Uncaught exception:", err);
         winston.error(`bazels3cache: Uncaught exception: ${err}`);
         process.exit(1); // hard stop
@@ -354,7 +354,7 @@ function main(args: Args) {
             AWS.config.credentials = credentials;
             const s3 = new AWS.S3({
                 apiVersion: "2006-03-01",
-                credentials: credentials
+                credentials
             });
             startServer(s3, config);
         })
