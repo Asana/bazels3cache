@@ -14,8 +14,7 @@
     "only-arrow-functions": false,
     "member-access": false,
     "object-literal-shorthand": false,
-    "curly": false,
-    "prefer-const": false
+    "curly": false
   },
   "rulesDirectory": []
 }

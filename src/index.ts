@@ -223,7 +223,7 @@ function startServer(s3: AWS.S3, config: Config) {
                     res.statusCode = StatusCode.Forbidden;
                     sendResponse(req, res, null, { startTime, awsPaused });
                 } else {
-                    let body: Buffer[] = [];
+                    const body: Buffer[] = [];
                     req.on("data", (chunk: Buffer) => {
                         body.push(chunk);
                     });
