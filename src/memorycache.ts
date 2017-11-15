@@ -18,7 +18,7 @@ export class Cache {
 
     constructor(private config: CacheConfig) {}
 
-    contains(s3key: string): boolean {
+    contains(s3key: string) {
         return this.entries.hasOwnProperty(s3key);
     }
 
@@ -32,7 +32,7 @@ export class Cache {
         }
     }
 
-    delete(s3key: string): boolean {
+    delete(s3key: string) {
         if (this.entries.hasOwnProperty(s3key)) {
             this._deleteNode(this.entries[s3key]);
             return true;
@@ -41,7 +41,7 @@ export class Cache {
         }
     }
 
-    maybeAdd(s3key: string, buffer: Buffer): void {
+    maybeAdd(s3key: string, buffer: Buffer) {
         if (this.config.enabled) {
             this.delete(s3key);
             if (buffer.byteLength < this.config.maxEntrySizeBytes) {
