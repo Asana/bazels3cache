@@ -47,8 +47,8 @@ export class Cache {
             if (buffer.byteLength < this.config.cache.maxEntrySizeBytes) {
                 this._makeSpace(buffer.byteLength);
                 const node: CacheNode = {
-                    s3key: s3key,
-                    buffer: buffer,
+                    s3key,
+                    buffer,
                     prev: null,
                     next: this.head
                 };
