@@ -80,7 +80,7 @@ function logProps(
 function sendResponse(
     req: http.ServerRequest,
     res: http.ServerResponse,
-    body: Buffer | string,
+    body: Buffer | string | null,
     attrs: {
         startTime: Date;
         fromCache?: boolean;
@@ -106,9 +106,9 @@ function sendResponse(
 }
 
 export function startServer(s3: AWS.S3, config: Config) {
-    const cache = new Cache(config); // in-memory cache
-    let idleTimer: NodeJS.Timer;
-    let awsPauseTimer: NodeJS.Timer;
+    const cache = new Cache(config.cache); // in-memory cache
+    let idleTimer: NodeJS.Timer | undefined;
+    let awsPauseTimer: NodeJS.Timer | undefined;
     let awsErrors = 0;
     let awsPaused = false;
 
@@ -128,7 +128,7 @@ export function startServer(s3: AWS.S3, config: Config) {
                 winston.warn("Unpausing AWS access; attempting to resume normal caching");
                 awsPaused = false;
                 awsErrors = 0;
-                awsPauseTimer = null;
+                awsPauseTimer = undefined;
             }, config.pauseMinutes * 60 * 1000);
         }
     }
@@ -163,7 +163,7 @@ export function startServer(s3: AWS.S3, config: Config) {
         }
 
         const startTime = new Date();
-        const s3key = req.url.slice(1); // remove leading "/"
+        const s3key = req.url ? req.url.slice(1) : ""; // remove leading "/"
 
         switch (req.method) {
             case "GET": {

@@ -8,29 +8,30 @@ export interface Args {
 
     // Other keys are allowed to mirror values from `Config` below. E.g.
     // --port=123 --bucket=foo
-    [key: string]: string | number | boolean;
+    [key: string]: string | number | boolean | undefined;
+}
+
+export interface CacheConfig {
+    enabled: boolean;
+    maxEntrySizeBytes: number;
+    maxTotalSizeBytes: number;
 }
 
 // Fields that we recognize from ../config.default.json, any user-specified
 // config file (e.g. --config=myconfig.json), and any command-line arguments
 // (e.g. --cache.maxEntrySizeBytes=1234)
 export interface Config {
-    port?: number;
-    idleMinutes?: number;
-    bucket?: string;
-    allowOffline?: boolean;
-    errorsBeforePausing?: number;
-    pauseMinutes?: number;
+    port: number;
+    idleMinutes: number;
+    bucket: string;
+    allowOffline: boolean;
+    errorsBeforePausing: number;
+    pauseMinutes: number;
+    cache: CacheConfig;
 
-    cache?: {
-        enabled: boolean;
-        maxEntrySizeBytes: number;
-        maxTotalSizeBytes: number;
-    };
-
-    logging?: {
-        level?: string;
-        file?: string;
+    logging: {
+        level: string;
+        file: string;
     };
 }
 
@@ -100,7 +101,7 @@ export function getConfig(args: Args): Config {
 
 // If any validation fails, returns a string which should be displayed as an error message.
 // If validation succeeds, returns null.
-export function validateConfig(config: Config): string {
+export function validateConfig(config: Config): string | null {
     if (!config.bucket) {
         return "S3 bucket is required, e.g. 'bazels3cache --bucket=<bucketname>'";
     }
