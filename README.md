@@ -96,16 +96,7 @@ environment variable:
 
     DEBUG=bazels3cache* bin/bazels3cache
 
-## Configuration
-
-Configuration can be controlled in the following ways:
-
-*   Command line arguments take top priority;
-*   After that, any arguments from a config file that was specified with
-    `--config path/to/config.json`;
-*   And finally, defaults from this project's own `config.default.json`.
-
-### Offline usage
+## Offline usage
 
 As mentioned above, it is often desirable to have Bazel continue to work even
 if you are offline.  By default, if `bazels3cache` is unable to reach S3, it
@@ -122,26 +113,36 @@ The way this works is:
     report back `200 OK`. It will never let Bazel know that it was unable to
     upload the item to S3.
 
-### Automatic pause of S3 access
+## Automatic pause of S3 access
 
 Repeatedly attempting to access S3 while offline can be slow. So after
 `bazels3cache` has gotten back ten consecutive error messages from S3, it
 temporarily pauses all S3 access (for five minutes). During that time, only the
 local in-memory cache will be used. This pause will be transparent to Bazel.
 
-### Automatic termination
+## Automatic termination
 
-By default, after 30 minutes of inactivity, bazels3cache terminates.
+After 30 minutes of inactivity, bazels3cache terminates.
 
-### Configurable settings
+## Configuration
 
 `config.default.json` shows all configurable settings, including comments
 describing them, and their default values. You can override these defaults in a
-couple of ways:
+couple of ways. The overrides are loaded in the order listed below -- for
+example, if you have both a `~/.config/bazels3cache/config.json` file and
+command-line arguments, then the command-line arguments win.
 
-*   Command line arguments with the same names as the names from the config
-    file, but with dots for nested elements. For example,
-    For example, the config file includes this:
+1.  A user-wide config file: `~/.config/bazels3cache/config.json`
+
+2.  A config file specified with `--config`:
+
+        bazels3cache --config=myconfig.json
+
+    Your config file only needs to include the values you want to override.
+
+3.  Command line arguments with the same names as the names from the config
+    file, but with dots for nested elements. For example, the config file
+    includes this:
 
         {
             "cache": {
@@ -149,12 +150,6 @@ couple of ways:
             }
         }
 
-    To override this, uses dashes:
+    To override this, use dashes:
 
         bazels3cache --cache.maxEntrySizeBytes=<NUMBER>
-
-*   You can also specify your own configuration file with `--config`:
-
-        bazels3cache --config=myconfig.json
-
-    Your config file only needs to include the values you want to override.

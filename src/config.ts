@@ -1,6 +1,7 @@
 import * as path from "path";
 import * as fs from "fs";
 import * as commentJson from "comment-json";
+import * as VError from "verror";
 
 // Command line arguments
 export interface Args {
@@ -76,26 +77,39 @@ function merge(...sources: any[]) {
     return target;
 }
 
+function readConfigFile(pth: string): Config {
+    const configJsonText = fs.readFileSync(pth, "utf8");
+    try {
+        return <Config> commentJson.parse(configJsonText);
+    } catch (e) {
+        throw new VError(e, `Error reading configuration file ${pth}`);
+    }
+}
+
 // When this function is called, logging has not yet been set up (because
 // the logging depends on the configuration). So don't make any winston
 // logging calls from here.
 export function getConfig(args: Args): Config {
-    const pth = path.join(__dirname, "../config.default.json");
-    const configJsonText = fs.readFileSync(pth, "utf8");
-    const defaultConfig: Config = commentJson.parse(configJsonText);
+    const defaultConfig = readConfigFile(path.join(__dirname, "../config.default.json"));
 
-    const configFileContents: Config = (args.config)
-        ? commentJson.parse(fs.readFileSync(args.config, "utf8"))
+    const userConfigPath = path.join(process.env.HOME, ".config/bazels3cache/config.json");
+    const userConfig: Config = fs.existsSync(userConfigPath)
+        ? readConfigFile(userConfigPath)
         : {};
 
-    const config = <Config> {
-        ...defaultConfig,
-        ...configFileContents
-    };
+    const commandLineConfig: Config = (args.config)
+        ? readConfigFile(args.config)
+        : {};
 
-    const merged = merge(config, args);
+    // Merge the different configs in order -- the later ones override the earlier ones:
+    const mergedConfig: Config = merge(
+        defaultConfig,      // .../config.default.json
+        userConfig,         // ~/.config/bazels3cache/config.json
+        commandLineConfig,  // --config myconfig.json
+        args                // rest of command line, e.g. --port 1234
+    );
 
-    return merged;
+    return mergedConfig;
 }
 
 // If any validation fails, returns a string which should be displayed as an error message.

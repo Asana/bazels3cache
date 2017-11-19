@@ -26,12 +26,14 @@
     "debug": "^3.1.0",
     "minimist": "^1.2.0",
     "supports-color": "^5.0.0",
+    "verror": "^1.10.0",
     "winston": "^2.4.0"
   },
   "devDependencies": {
     "@types/debug": "0.0.30",
     "@types/minimist": "^1.2.0",
     "@types/node": "^8.0.51",
+    "@types/verror": "^1.10.3",
     "@types/winston": "^2.3.7",
     "typescript": "^2.6.1"
   }
