@@ -113,12 +113,17 @@ The way this works is:
     report back `200 OK`. It will never let Bazel know that it was unable to
     upload the item to S3.
 
+To be clear: The only errors that will be ignored in this way are connectivity
+errors. Other S3 errors, such as invalid key, access denied, etc., will be
+passed on to Bazel as errors.
+
 ## Automatic pause of S3 access
 
 Repeatedly attempting to access S3 while offline can be slow. So after
-`bazels3cache` has gotten back ten consecutive error messages from S3, it
-temporarily pauses all S3 access (for five minutes). During that time, only the
-local in-memory cache will be used. This pause will be transparent to Bazel.
+`bazels3cache` has gotten back three consecutive connectivity errors from S3,
+it temporarily pauses all S3 access (for five minutes). During that time, only
+the local in-memory cache will be used. This pause will be transparent to
+Bazel.
 
 ## Automatic termination
 

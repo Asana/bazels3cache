@@ -4,7 +4,7 @@
   "bucket": null, // specify this on command line or in another config file
   "idleMinutes": 30,
   "allowOffline": true,
-  "errorsBeforePausing": 10,
+  "errorsBeforePausing": 3,
   "pauseMinutes": 5,
 
   "cache": {
