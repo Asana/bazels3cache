@@ -18,7 +18,16 @@ Okay:
 
 ## I have all day, tell me more!
 
-Bazel actually uses the cache only as [Content-addressable
+If you want Bazel to use S3 as its backing store, you could really use any
+WebDAV-to-S3 proxy. But the key feature of `bazels3cache` that differentiates
+it from a general-purpose proxy is that if you are offline, it will report to
+Bazel that "everything is fine, I just can't find the items you're looking for
+in the cache." Even if Bazel tries to _upload_ something to the cache,
+`bazels3cache` will pretend the upload succeeded. (This is harmless; it's just
+a cache, after all.) This means that Bazel will gracefully fall back to working
+locally if you go offline.
+
+Another feature: Bazel actually uses the cache only as [Content-addressable
 storage](https://en.wikipedia.org/wiki/Content-addressable_storage) (CAS). What
 this means is that the "key" (in this case, the URL) of any entry in the cache
 is actually a hash of that entry's contents. Because of this, you can be
@@ -98,10 +107,10 @@ Configuration can be controlled in the following ways:
 
 ### Offline usage
 
-It is often desirable to have Bazel continue to work even if you are offline.
-By default, if `bazels3cache` is unable to reach S3, it will _not_ report
-error messages back to Bazel; it will continue to function, passing appropriate
-success codes back to Bazel.
+As mentioned above, it is often desirable to have Bazel continue to work even
+if you are offline.  By default, if `bazels3cache` is unable to reach S3, it
+will _not_ report error messages back to Bazel; it will continue to function,
+passing appropriate success codes back to Bazel.
 
 The way this works is:
 
