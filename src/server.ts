@@ -126,6 +126,7 @@ export function startServer(s3: AWS.S3, config: Config) {
                 awsErrors = 0;
                 awsPauseTimer = null;
             }, config.pauseMinutes * 60 * 1000);
+            awsPauseTimer.unref(); // prevent this timer from delaying shutdown
         }
     }
 
@@ -136,14 +137,6 @@ export function startServer(s3: AWS.S3, config: Config) {
     function shutdown(logMessage: string) {
         if (logMessage) {
             winston.info(`Idle for ${config.idleMinutes} minutes; terminating`);
-        }
-        if (idleTimer) {
-            clearTimeout(idleTimer);
-            idleTimer = undefined;
-        }
-        if (awsPauseTimer) {
-            clearTimeout(awsPauseTimer);
-            awsPauseTimer = undefined;
         }
         server.close();
     }
@@ -156,6 +149,7 @@ export function startServer(s3: AWS.S3, config: Config) {
             idleTimer = setTimeout(() => {
                 shutdown(`Idle for ${config.idleMinutes} minutes; terminating`);
             }, config.idleMinutes * 60 * 1000);
+            idleTimer.unref(); // prevent this timer from delaying shutdown
         }
 
         const startTime = new Date();
