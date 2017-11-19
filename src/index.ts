@@ -7,19 +7,7 @@ import { Args, Config, getConfig, validateConfig } from "./config";
 import { Cache } from "./memorycache";
 import { debug } from "./debug";
 import { startServer } from "./server";
-
-function initLogging(config: Config) {
-    winston.configure({
-        level: config.logging.level,
-        transports: [
-            new (winston.transports.File)({
-                filename: config.logging.file,
-                json: false
-            })
-        ],
-        padLevels: true,
-    });
-}
+import { initLogging } from "./logging";
 
 function main(args: Args) {
     const config = getConfig(args);
@@ -33,8 +21,6 @@ function main(args: Args) {
         return;
     }
 
-    winston.info("starting");
-    process.on("exit", (exitCode) => winston.info(`terminating with exit code ${exitCode}`));
     process.on('uncaughtException', function (err) {
         console.error("bazels3cache: Uncaught exception:", err);
         winston.error(`bazels3cache: Uncaught exception: ${err}`);
