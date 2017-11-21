@@ -22,6 +22,7 @@ export interface Config {
     allowOffline?: boolean;
     errorsBeforePausing?: number;
     pauseMinutes?: number;
+    maxEntrySizeBytes?: number;
 
     cache?: {
         enabled: boolean;

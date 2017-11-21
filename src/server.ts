@@ -219,6 +219,11 @@ export function startServer(s3: AWS.S3, config: Config) {
                         if (awsPaused) {
                             res.statusCode = StatusCode.OK;
                             sendResponse(req, res, null, { startTime, awsPaused });
+                        } else if (config.maxEntrySizeBytes !== 0 && fullBody.byteLength > config.maxEntrySizeBytes) {
+                            // The item is bigger than we want to allow in our S3 cache.
+                            winston.info(`Not uploading ${s3key}, because size ${fullBody.byteLength} exceeds maxEntrySizeBytes ${config.maxEntrySizeBytes}`);
+                            res.statusCode = StatusCode.OK; // tell Bazel the PUT succeeded
+                            sendResponse(req, res, null, { startTime, awsPaused });
                         } else {
                             const s3request = s3.putObject({
                                 Bucket: config.bucket,
