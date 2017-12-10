@@ -87,6 +87,25 @@ function readConfigFile(pth: string): Config {
     }
 }
 
+function ensureInteger(name: string, value: any): number {
+    if (typeof value === "string") {
+        if (!value.match(/^[0-9]+$/)) {
+            throw `Expected '${name}' to be an integer; got '${value}'`;
+        }
+        value = parseInt(value);
+    }
+
+    if (typeof value === "number") {
+        if (Math.floor(value) !== value) {
+            throw `Expected '${name}' to be an integer; got '${value}'`;
+        }
+    } else {
+        throw `Expected '${name}' to be an integer; got '${value}'`;
+    }
+
+    return value;
+}
+
 // When this function is called, logging has not yet been set up (because
 // the logging depends on the configuration). So don't make any winston
 // logging calls from here.
@@ -115,14 +134,23 @@ export function getConfig(args: Args): Config {
 
 // If any validation fails, returns a string which should be displayed as an error message.
 // If validation succeeds, returns null.
-export function validateConfig(config: Config): string {
+export function validateConfig(config: Config): Config {
     if (!config.bucket) {
-        return "S3 bucket is required, e.g. 'bazels3cache --bucket=<bucketname>'";
+        throw "S3 bucket is required, e.g. 'bazels3cache --bucket=<bucketname>'";
+    }
+
+    config = merge(
+        config,
+        { port: ensureInteger("port", config.port) }
+    );
+
+    if (config.port < 1024 || config.port > 65535) {
+        throw `Port must be in the range 1024..65535`;
     }
 
     if (config.cache.maxEntrySizeBytes > config.cache.maxTotalSizeBytes) {
-        return `max entry size (${config.cache.maxEntrySizeBytes}) must be <= max total size (${config.cache.maxTotalSizeBytes})`;
+        throw `max entry size (${config.cache.maxEntrySizeBytes}) must be <= max total size (${config.cache.maxTotalSizeBytes})`;
     }
 
-    return null;
+    return config;
 }

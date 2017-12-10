@@ -19,5 +19,6 @@ if [[ -f $CODEZ/info.yaml ]]; then
     export AWS_SECRET_ACCESS_KEY=$(read_info_yaml_property aws_secret_access_key)
 fi
 
-# "DEBUG=bazels3cache*" turns on logging. See https://www.npmjs.com/package/debug
-DEBUG=bazels3cache* $DIR/bazels3cache "$@"
+PORT==$(( 12000 + $(id -u) ))
+
+$DIR/bazels3cache "$@"

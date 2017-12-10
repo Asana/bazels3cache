@@ -9,12 +9,10 @@
 Okay:
 
 *   Now, when you run `bzl`, that script first runs `bazels3cache`, then Bazel.
-*   `bazels3cache` listens on localhost:7777
-*   You can see its log here: `/tmp/bazels3cache.log`
-*   In that log, `starting` means `bazels3cache` started; `terminating with
-    exit code <n>` means it terminated.
+*   `bazels3cache` listens on a port on localhost. (`bzl` passes the `--port`
+    argument to tell it which port to use.)
 *   After 30 minutes of idle (no requests), it terminates automatically.
-*   To make it terminate: `bzl shutdown` or `curl http://localhost:7777/shutdown`
+*   To make it terminate: `bzl shutdown`
 
 ## I have all day, tell me more!
 
@@ -69,7 +67,7 @@ Clean shutdown, just go through `bzl`:
 
 Or, directly (this is what `bzl` actually does):
 
-    curl http://localhost:7777/shutdown
+    curl http://localhost:<port>/shutdown
 
 Or the brute-force way:
 
@@ -80,8 +78,9 @@ requests for 30 minutes.
 
 ## Arguments for Bazel
 
-`bazels3cache` defaults to using port 7777. Assuming you have it on the default
-port, and running on `localhost, start Bazel with these arguments:
+`bazels3cache` defaults to using port 7777, although bzl usually chooses a
+different port. Assuming you have it on the default port, and running on
+`localhost, start Bazel with these arguments:
 
     bazel \
         --host_jvm_args=-Dbazel.DigestFunction=SHA1 \

@@ -1,4 +1,5 @@
 import * as http from "http";
+import * as path from "path";
 import * as AWS from "aws-sdk";
 import * as debug_ from "debug";
 import * as minimist from "minimist";
@@ -105,7 +106,7 @@ function prepareErrorResponse(
     res.write(JSON.stringify(err, null, "  "));
 }
 
-export function startServer(s3: AWS.S3, config: Config) {
+export function startServer(s3: AWS.S3, config: Config, onDoneInitializing: () => void) {
     const cache = new Cache(config); // in-memory cache
     let idleTimer: NodeJS.Timer;
     let awsPauseTimer: NodeJS.Timer;
@@ -295,8 +296,10 @@ export function startServer(s3: AWS.S3, config: Config) {
     });
 
     server.listen(config.port, hostname, () => {
+        const logfile = path.resolve(config.logging.file);
         debug(`started server at http://${hostname}:${config.port}/`);
         winston.info(`started server at http://${hostname}:${config.port}/`);
-        console.log(`bazels3cache: server running at http://${hostname}:${config.port}/`);
+        console.log(`bazels3cache: started server at http://${hostname}:${config.port}/, logging to ${logfile}`);
+        onDoneInitializing();
     });
 }
