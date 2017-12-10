@@ -2,7 +2,7 @@
 {
   "port": 7777,
   "bucket": null, // specify this on command line or in another config file
-  "idleMinutes": 30,
+  "idleMinutes": 180,
   "allowOffline": true,
   "errorsBeforePausing": 3,
   "pauseMinutes": 5,
