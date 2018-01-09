@@ -91,7 +91,6 @@ function main(args: string[]) {
             // - open /dev/null for all three of those
             // - send a "done_initializing" message to our parent process.
 
-            process.stdin.end(); // may not be necessary
             fs.closeSync(0);
             fs.closeSync(1);
             fs.closeSync(2);
