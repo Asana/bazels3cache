@@ -1,8 +1,11 @@
+import * as fs from "fs";
 import * as http from "http";
 import * as path from "path";
 import * as AWS from "aws-sdk";
 import * as debug_ from "debug";
 import * as minimist from "minimist";
+import * as mkdirp from "mkdirp";
+import * as rimraf from "rimraf";
 import * as winston from "winston";
 import { Args, Config, getConfig, validateConfig } from "./config";
 import { Cache } from "./memorycache";
@@ -49,7 +52,7 @@ function logProps(
 function sendResponse(
     req: http.ServerRequest,
     res: http.ServerResponse,
-    body: Buffer | string,
+    body: Buffer | string | number,
     attrs: {
         startTime: Date,
         fromCache?: boolean,
@@ -61,6 +64,8 @@ function sendResponse(
         responseLength = body.byteLength;
     } else if (typeof body === "string") {
         responseLength = body.length;
+    } else if (typeof body === "number") {
+        responseLength = body;
     } else {
         responseLength = 0;
     }
@@ -71,7 +76,7 @@ function sendResponse(
         fromCache: attrs.fromCache,
         awsPaused: attrs.awsPaused
     });
-    res.end.apply(res, body ? [body] : []);
+    res.end.apply(res, (body instanceof Buffer || typeof body === "string") ? [body] : []);
 }
 
 function isIgnorableError(err: AWS.AWSError) {
@@ -106,12 +111,17 @@ function prepareErrorResponse(
     res.write(JSON.stringify(err, null, "  "));
 }
 
+function pathToUploadCache(s3key: string, config: Config) {
+    return path.join(config.asyncUpload.cacheDir, s3key);
+}
+
 export function startServer(s3: AWS.S3, config: Config, onDoneInitializing: () => void) {
     const cache = new Cache(config); // in-memory cache
     let idleTimer: NodeJS.Timer;
     let awsPauseTimer: NodeJS.Timer;
     let awsErrors = 0;
     let awsPaused = false;
+    let pendingUploadBytes = 0;
 
     function onAWSError(req: http.ServerRequest, s3error: AWS.AWSError) {
         const message = `${req.method} ${req.url}: ${s3error.message || s3error.code}`;
@@ -135,12 +145,27 @@ export function startServer(s3: AWS.S3, config: Config, onDoneInitializing: () =
         awsErrors = 0;
     }
 
+    function clearAsyncUploadCache() {
+        rimraf.sync(config.asyncUpload.cacheDir);
+    }
+
     function shutdown(logMessage: string) {
         if (logMessage) {
-            winston.info(`Idle for ${config.idleMinutes} minutes; terminating`);
+            winston.info(logMessage);
         }
-        server.close();
+
+        // Delete all temp files that are waiting to be uploaded
+        clearAsyncUploadCache();
+
+        // We have to forcefully shut down, because we were told to do so, and who knows
+        // what other background tasks might currently be taking place, e.g. various
+        // uploads to S3.
+        process.exit();
     }
+
+    // We are starting up; if there are any left-over temp files that were supposed to be
+    // uploaded by the previous instance of the bazels3cache, delete them
+    clearAsyncUploadCache();
 
     const server = http.createServer((req: http.ServerRequest, res: http.ServerResponse) => {
         if (idleTimer) {
@@ -170,6 +195,10 @@ export function startServer(s3: AWS.S3, config: Config, onDoneInitializing: () =
                         fromCache: true,
                         awsPaused
                     });
+                } else if (fs.existsSync(pathToUploadCache(s3key, config))) {
+                    // we are currently uploading this same file!
+                    const buf = fs.readFileSync(pathToUploadCache(s3key, config));
+                    sendResponse(req, res, buf, { startTime, awsPaused });
                 } else if (awsPaused) {
                     res.statusCode = StatusCode.NotFound;
                     sendResponse(req, res, null, { startTime, awsPaused });
@@ -210,26 +239,32 @@ export function startServer(s3: AWS.S3, config: Config, onDoneInitializing: () =
                     res.statusCode = StatusCode.Forbidden;
                     sendResponse(req, res, null, { startTime, awsPaused });
                 } else {
-                    let body: Buffer[] = [];
-                    req.on("data", (chunk: Buffer) => {
-                        body.push(chunk);
-                    });
-                    req.on("end", () => {
-                        const fullBody = Buffer.concat(body);
-                        cache.maybeAdd(s3key, fullBody);
+                    const pth = pathToUploadCache(s3key, config);
+                    mkdirp.sync(path.dirname(pth));
+                    req.pipe(fs.createWriteStream(pth)).on("close", () => {
+                        const size = fs.statSync(pth).size;
                         if (awsPaused) {
                             res.statusCode = StatusCode.OK;
                             sendResponse(req, res, null, { startTime, awsPaused });
-                        } else if (config.maxEntrySizeBytes !== 0 && fullBody.byteLength > config.maxEntrySizeBytes) {
+                            fs.unlinkSync(pth);
+                        } else if (config.maxEntrySizeBytes !== 0 && size > config.maxEntrySizeBytes) {
                             // The item is bigger than we want to allow in our S3 cache.
-                            winston.info(`Not uploading ${s3key}, because size ${fullBody.byteLength} exceeds maxEntrySizeBytes ${config.maxEntrySizeBytes}`);
+                            winston.info(`Not uploading ${s3key}, because size ${size} exceeds maxEntrySizeBytes ${config.maxEntrySizeBytes}`);
                             res.statusCode = StatusCode.OK; // tell Bazel the PUT succeeded
-                            sendResponse(req, res, null, { startTime, awsPaused });
+                            sendResponse(req, res, size, { startTime, awsPaused });
+                            fs.unlinkSync(pth);
+                        } else if (pendingUploadBytes + size > config.asyncUpload.maxPendingUploadMB * 1024 * 1024) {
+                            winston.info(`Not uploading ${s3key}, because there are already too many pending uploads`);
+                            res.statusCode = StatusCode.OK; // tell Bazel the PUT succeeded
+                            sendResponse(req, res, size, { startTime, awsPaused });
+                            fs.unlinkSync(pth);
                         } else {
-                            const s3request = s3.putObject({
+                            pendingUploadBytes += size;
+                            const streamedBody = fs.createReadStream(pth);
+                            const s3request = s3.upload({
                                 Bucket: config.bucket,
                                 Key: s3key,
-                                Body: fullBody,
+                                Body: streamedBody,
                                 // Very important: The bucket owner needs full control of the uploaded
                                 // object, so that they can share the object with all the appropriate
                                 // users
@@ -237,16 +272,33 @@ export function startServer(s3: AWS.S3, config: Config, onDoneInitializing: () =
                             }).promise();
                             s3request
                                 .then(() => {
-                                    sendResponse(req, res, null, { startTime, awsPaused });
+                                    if (!config.asyncUpload.enabled) {
+                                        sendResponse(req, res, size, { startTime, awsPaused });
+                                    }
                                     onAWSSuccess();
                                 })
                                 .catch((err: AWS.AWSError) => {
                                     onAWSError(req, err);
-                                    // If the error is an ignorable one (e.g. the user is offline), then
-                                    // return 200 OK -- pretend the PUT succeeded.
-                                    prepareErrorResponse(res, err, StatusCode.OK, config);
-                                    sendResponse(req, res, null, { startTime, awsPaused });
+                                    if (!config.asyncUpload.enabled) {
+                                        // If the error is an ignorable one (e.g. the user is offline), then
+                                        // return 200 OK -- pretend the PUT succeeded.
+                                        prepareErrorResponse(res, err, StatusCode.OK, config);
+                                        sendResponse(req, res, size, { startTime, awsPaused });
+                                    }
+                                })
+                                .then(() => {
+                                    pendingUploadBytes -= size;
+                                    fs.unlinkSync(pth);
                                 });
+
+                            if (config.asyncUpload.enabled) {
+                                // Send the response back immediately, even though the upload to S3 has not
+                                // taken place yet. This allows Bazel to remain unblocked while large uploads
+                                // take place.
+                                //
+                                // We don't know if the upload will succeed or fail; we just say it succeeded.
+                                sendResponse(req, res, size, { startTime, awsPaused });
+                            }
                         }
                     });
                 }
@@ -278,6 +330,27 @@ export function startServer(s3: AWS.S3, config: Config, onDoneInitializing: () =
                             sendResponse(req, res, null, { startTime, awsPaused });
                         });
                 }
+                break;
+            }
+
+            case "DELETE": {
+                cache.delete(s3key);
+
+                const s3request = s3.deleteObject({
+                    Bucket: config.bucket,
+                    Key: s3key
+                }).promise();
+
+                s3request
+                    .then(() => {
+                        onAWSSuccess();
+                        sendResponse(req, res, null, { startTime, awsPaused });
+                    })
+                    .catch((err: AWS.AWSError) => {
+                        onAWSError(req, err);
+                        prepareErrorResponse(res, err, StatusCode.NotFound, config);
+                        sendResponse(req, res, null, { startTime, awsPaused });
+                    });
                 break;
             }
 

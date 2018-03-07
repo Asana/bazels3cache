@@ -19,6 +19,6 @@ if [[ -f $CODEZ/info.yaml ]]; then
     export AWS_SECRET_ACCESS_KEY=$(read_info_yaml_property aws_secret_access_key)
 fi
 
-PORT==$(( 12000 + $(id -u) ))
+PORT=$(( 12000 + $(id -u) ))
 
-$DIR/bazels3cache "$@"
+$DIR/bazels3cache --port=$PORT "$@"

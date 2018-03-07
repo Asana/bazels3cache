@@ -8,6 +8,12 @@
   "pauseMinutes": 5,
   "maxEntrySizeBytes": 64000000, // max size for one item uploaded to S3; 0 means no limit
 
+  "asyncUpload": {
+    "enabled": true,
+    "maxPendingUploadMB": 250,
+    "cacheDir": "~/.cache/bazels3cache"
+  },
+
   "cache": { // settings related to the in-memory cache
     "enabled": true,
     "maxEntrySizeBytes": 1000000, // max size for items retained in memory

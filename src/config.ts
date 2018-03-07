@@ -1,5 +1,6 @@
 import * as path from "path";
 import * as fs from "fs";
+import * as os from "os";
 import * as commentJson from "comment-json";
 import * as VError from "verror";
 
@@ -23,6 +24,12 @@ export interface Config {
     errorsBeforePausing?: number;
     pauseMinutes?: number;
     maxEntrySizeBytes?: number;
+
+    asyncUpload?: {
+        enabled?: boolean;
+        maxPendingUploadMB?: number;
+        cacheDir?: string;
+    }
 
     cache?: {
         enabled: boolean;
@@ -67,10 +74,12 @@ function merge(...sources: any[]) {
     const target: any = {};
     sources.forEach(source => {
         Object.keys(source).forEach(key => {
-            const value = source[key];
+            let value = source[key];
             if (typeof value === "object" && value !== null) {
                 target[key] = merge(target[key] || {}, value);
             } else {
+                if (value === "true") value = true;
+                if (value === "false") value = false;
                 target[key] = value;
             }
         })
@@ -128,6 +137,8 @@ export function getConfig(args: Args): Config {
         commandLineConfig,  // --config myconfig.json
         args                // rest of command line, e.g. --port 1234
     );
+
+    mergedConfig.asyncUpload.cacheDir = mergedConfig.asyncUpload.cacheDir.replace(/^~/, os.homedir());
 
     return mergedConfig;
 }

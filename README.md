@@ -128,6 +128,27 @@ Bazel.
 
 After 30 minutes of inactivity, bazels3cache terminates.
 
+## Asynchronous uploading to S3
+
+When bazels3cache receives a `PUT` (an upload request) from Bazel, it needs to
+upload the content to S3, and send a success/failure response back to Bazel.
+There are two ways it can handle the response to Bazel:
+
+*   If asynchronous uploading is enabled (the default), then bazels3cache
+    immediately sends a success response back to Bazel, even before it has
+    uploaded to S3. This allows the Bazel build to complete much more quickly.
+    Of course, the upload to S3 might fail; but it's okay if Bazel doesn't know
+    that.
+
+    In this case, `bazels3cache` might even drop some uploads if it falls too
+    far behind. Since the remote cache is just a cache, this is usually
+    acceptable.
+
+*   If asynchronous uploading is disabled (the `"asyncUpload"` section of
+    `config.default.json`, or `--asyncUpload.enabled=false` on the command line), then
+    the response code will not be sent back to Bazel until the upload to S3 has
+    completed.
+
 ## Configuration
 
 `config.default.json` shows all configurable settings, including comments
