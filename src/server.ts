@@ -195,10 +195,6 @@ export function startServer(s3: AWS.S3, config: Config, onDoneInitializing: () =
                         fromCache: true,
                         awsPaused
                     });
-                } else if (fs.existsSync(pathToUploadCache(s3key, config))) {
-                    // we are currently uploading this same file!
-                    const buf = fs.readFileSync(pathToUploadCache(s3key, config));
-                    sendResponse(req, res, buf, { startTime, awsPaused });
                 } else if (awsPaused) {
                     res.statusCode = StatusCode.NotFound;
                     sendResponse(req, res, null, { startTime, awsPaused });
@@ -240,6 +236,13 @@ export function startServer(s3: AWS.S3, config: Config, onDoneInitializing: () =
                     sendResponse(req, res, null, { startTime, awsPaused });
                 } else {
                     const pth = pathToUploadCache(s3key, config);
+                    if (fs.existsSync(pth)) {
+                        // We are apparently already uploading this file. Don't try to start a
+                        // second upload of the same file.
+                        res.statusCode = StatusCode.OK;
+                        sendResponse(req, res, null, { startTime, awsPaused });
+                        return;
+                    }
                     mkdirp.sync(path.dirname(pth));
                     req.pipe(fs.createWriteStream(pth)).on("close", () => {
                         const size = fs.statSync(pth).size;
