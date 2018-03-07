@@ -26,19 +26,19 @@
     "minimist": "^1.2.0",
     "mkdirp": "^0.5.1",
     "rimraf": "^2.6.2",
-    "supports-color": "^5.0.0",
+    "supports-color": "^5.3.0",
     "verror": "^1.10.0",
     "winston": "^2.4.0"
   },
   "devDependencies": {
-    "@types/comment-json": "^1.1.0",
+    "@types/comment-json": "^1.1.1",
     "@types/debug": "0.0.30",
     "@types/minimist": "^1.2.0",
     "@types/mkdirp": "^0.5.2",
-    "@types/node": "^8.0.51",
+    "@types/node": "^9.4.6",
     "@types/rimraf": "^2.0.2",
     "@types/verror": "^1.10.3",
-    "@types/winston": "^2.3.7",
-    "typescript": "^2.6.1"
+    "@types/winston": "^2.3.8",
+    "typescript": "^2.7.2"
   }
 }
