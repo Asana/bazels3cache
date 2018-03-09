@@ -163,6 +163,14 @@ export function startServer(s3: AWS.S3, config: Config, onDoneInitializing: () =
         process.exit();
     }
 
+    function safeUnlinkSync(pth: string) {
+        try {
+            fs.unlinkSync(pth);
+        } catch (e) {
+            winston.error(e);
+        }
+    }
+
     // We are starting up; if there are any left-over temp files that were supposed to be
     // uploaded by the previous instance of the bazels3cache, delete them
     clearAsyncUploadCache();
@@ -245,22 +253,30 @@ export function startServer(s3: AWS.S3, config: Config, onDoneInitializing: () =
                     }
                     mkdirp.sync(path.dirname(pth));
                     req.pipe(fs.createWriteStream(pth)).on("close", () => {
-                        const size = fs.statSync(pth).size;
+                        let size: number;
+                        try {
+                            size = fs.statSync(pth).size;
+                        } catch (e) {
+                            // This should not happen, but we have seen it on testville
+                            winston.error(e);
+                            sendResponse(req, res, null, { startTime, awsPaused });
+                            return;
+                        }
                         if (awsPaused) {
                             res.statusCode = StatusCode.OK;
                             sendResponse(req, res, null, { startTime, awsPaused });
-                            fs.unlinkSync(pth);
+                            safeUnlinkSync(pth);
                         } else if (config.maxEntrySizeBytes !== 0 && size > config.maxEntrySizeBytes) {
                             // The item is bigger than we want to allow in our S3 cache.
                             winston.info(`Not uploading ${s3key}, because size ${size} exceeds maxEntrySizeBytes ${config.maxEntrySizeBytes}`);
                             res.statusCode = StatusCode.OK; // tell Bazel the PUT succeeded
                             sendResponse(req, res, size, { startTime, awsPaused });
-                            fs.unlinkSync(pth);
+                            safeUnlinkSync(pth);
                         } else if (pendingUploadBytes + size > config.asyncUpload.maxPendingUploadMB * 1024 * 1024) {
                             winston.info(`Not uploading ${s3key}, because there are already too many pending uploads`);
                             res.statusCode = StatusCode.OK; // tell Bazel the PUT succeeded
                             sendResponse(req, res, size, { startTime, awsPaused });
-                            fs.unlinkSync(pth);
+                            safeUnlinkSync(pth);
                         } else {
                             pendingUploadBytes += size;
                             const streamedBody = fs.createReadStream(pth);
@@ -291,7 +307,7 @@ export function startServer(s3: AWS.S3, config: Config, onDoneInitializing: () =
                                 })
                                 .then(() => {
                                     pendingUploadBytes -= size;
-                                    fs.unlinkSync(pth);
+                                    safeUnlinkSync(pth);
                                 });
 
                             if (config.asyncUpload.enabled) {
