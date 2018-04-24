@@ -23,6 +23,7 @@ export interface Config {
     allowOffline?: boolean;
     errorsBeforePausing?: number;
     pauseMinutes?: number;
+    socketTimeoutSeconds?: number;
     maxEntrySizeBytes?: number;
 
     asyncUpload?: {
