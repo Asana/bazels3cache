@@ -176,6 +176,13 @@ export function startServer(s3: AWS.S3, config: Config, onDoneInitializing: () =
     clearAsyncUploadCache();
 
     const server = http.createServer((req: http.ServerRequest, res: http.ServerResponse) => {
+        res.setTimeout(config.socketTimeoutSeconds * 1000, () => {
+            // Oh well, we can't wait forever bail out on this request and close the socket
+            winston.warn("Socket timeout reached. Returning NotFound");
+            res.statusCode = StatusCode.NotFound;
+            sendResponse(req, res, null, {startTime, awsPaused });
+        });
+
         if (idleTimer) {
             clearTimeout(idleTimer);
         }
