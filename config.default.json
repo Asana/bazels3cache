@@ -6,7 +6,7 @@
   "allowOffline": true,
   "errorsBeforePausing": 3,
   "pauseMinutes": 5,
-  "socketTimeoutSeconds": 600, // Default is 120 seconds
+  "socketTimeoutSeconds": 30, // Default is 120 seconds
   "maxEntrySizeBytes": 64000000, // max size for one item uploaded to S3; 0 means no limit
 
   "asyncUpload": {
