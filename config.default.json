@@ -25,6 +25,6 @@
     // "info" will log infos, warnings, and errors
     // To also log the full JSON of all S3 errors, use "verbose"
     "level": "info",
-    "file": "/tmp/bazels3cache.log"
+    "file": "~/.bazels3cache.log"
   }
 }

@@ -140,6 +140,7 @@ export function getConfig(args: Args): Config {
     );
 
     mergedConfig.asyncUpload.cacheDir = mergedConfig.asyncUpload.cacheDir.replace(/^~/, os.homedir());
+    mergedConfig.logging.file = mergedConfig.logging.file.replace(/^~/, os.homedir());
 
     return mergedConfig;
 }
