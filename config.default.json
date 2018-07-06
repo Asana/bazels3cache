@@ -16,7 +16,7 @@
   },
 
   "cache": { // settings related to the in-memory cache
-    "enabled": true,
+    "enabled": false,
     "maxEntrySizeBytes": 1000000, // max size for items retained in memory
     "maxTotalSizeBytes": 50000000 // be careful, this is an in-memory cache
   },
