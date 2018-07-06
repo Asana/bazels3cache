@@ -18,7 +18,7 @@
   },
   "keywords": [],
   "author": "Mike Morearty (https://github.com/mmorearty)",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "aws-sdk": "^2.205.0",
     "comment-json": "^1.1.3",
