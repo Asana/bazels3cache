@@ -21,6 +21,13 @@ cache.
 
         bazel build --remote_http_cache=http://localhost:7777 ...
 
+## Main features
+
+*   Use an S3 bucket as the storage area for your Bazel remote cache.
+*   Keep working (gracefully degrading to no cache) even if you are offline.
+*   Asynchronous uploading to S3, to avoid slowing down your Bazel build.
+*   Local in-memory cache of recently accessed data (off by default).
+
 ## Detailed description
 
 If you want Bazel to use S3 as its backing store, you could really use any
@@ -32,7 +39,8 @@ in the cache." Even if Bazel tries to _upload_ something to the cache,
 a cache, after all.) This means that Bazel will gracefully fall back to working
 locally if you go offline.
 
-Another feature: Bazel actually uses the cache only as [Content-addressable
+Another feature (but off by default): In-memory cache. Bazel actually uses the
+cache only as [Content-addressable
 storage](https://en.wikipedia.org/wiki/Content-addressable_storage) (CAS). What
 this means is that the "key" (in this case, the URL) of any entry in the cache
 is actually a hash of that entry's contents. Because of this, you can be
