@@ -1,20 +1,27 @@
 # Web server for proxying Bazel remote cache requests to S3
 
 `bazels3cache` is a simple web server that supports basic WebDAV (`GET`, `PUT`,
-`HEAD`, and `DELETE`), and proxies those requests through to S3. We use it with
-`bazel --remote_rest_cache=...`, so that we can use S3 for our Bazel cache.
+`HEAD`, and `DELETE`), and proxies those requests through to S3. You can use it
+with `bazel --remote_http_cache=...`, so that you can use S3 for your Bazel
+cache.
 
-## I'm in a hurry, just tell me the basics!
+## Quick start
 
-Okay:
+*   Download and install bazels3cache:
 
-*   Now, when you run `bzl`, that script first runs `bazels3cache`, then Bazel.
-*   `bazels3cache` listens on a port on localhost. (`bzl` passes the `--port`
-    argument to tell it which port to use.)
-*   After 30 minutes of idle (no requests), it terminates automatically.
-*   To make it terminate: `bzl shutdown`
+        npm install -g bazels3cache
 
-## I have all day, tell me more!
+*   Launch `bazels3cache` like this (by default it listens on port 7777):
+
+        bazels3cache --daemon \
+            --bucket=MY_S3_BUCKET \
+            --logging.file=$HOME/.bazels3cache.log
+
+*   When you launch Bazel, tell it where the cache is:
+
+        bazel build --remote_http_cache=http://localhost:7777 ...
+
+## Detailed description
 
 If you want Bazel to use S3 as its backing store, you could really use any
 WebDAV-to-S3 proxy. But the key feature of `bazels3cache` that differentiates
@@ -31,61 +38,32 @@ this means is that the "key" (in this case, the URL) of any entry in the cache
 is actually a hash of that entry's contents. Because of this, you can be
 guaranteed that any cached data for a given key is definitely still valid.
 
-`bazels3cache` takes advantage of that fact, and keeps a local (currently
-in-memory) cache of the data it has previously downloaded or uploaded. This can
-allow for faster cache response: Sometimes it will not be necessary to make a
-round-trip to S3.
+`bazels3cache` takes advantage of that fact, and optionally keeps a local
+(currently in-memory) cache of the data it has previously downloaded or
+uploaded. This can allow for faster cache response: Sometimes it will not be
+necessary to make a round-trip to S3. (This feature is OFF by default. Use
+`--cache.enabled=true` to enable it.)
 
 ## Starting
 
-To start it, you will almost always just go through `bzl` -- this is by far the
-easiest way:
-
-    bzl build //target  # starts bazels3cache, then builds the target
-    # or,
-    bzl build           # starts bazels3cache, doesn't build any bazel targets
-
-If you really want to start it manually, you will have to address a couple of
-issues:
-
-*   Where does it find AWS credentials? The program will look in the standard
-    AWS-defined places, including the environment and `~/.aws/credentials`, but
-    it will not look in `$CODEZ/info.yaml`.
-
-*   What S3 bucket do you want it to use for the cache?
-
-`bin/bazels3cache` just starts the program, with no special ability to address
-the above issues. But `bin/start` is a little smarter, it will read
-`$CODEZ/info.yaml` and pass its values as environment variables. You will still
-have to tell it what bucket to use.
+`bazels3cache` will look for AWS credentials in the standard AWS-defined
+places, including the
+[environment](https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-environment.html)
+(`AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`) and
+[`~/.aws/credentials`](https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-shared.html).
 
 ## Stopping
 
-Clean shutdown, just go through `bzl`:
+A clean shutdown:
 
-    bzl shutdown       # This also stops bazels3cache
-
-Or, directly (this is what `bzl` actually does):
-
-    curl http://localhost:<port>/shutdown
+    curl http://localhost:7777/shutdown
 
 Or the brute-force way:
 
     pkill -f bazels3cache
 
-Also, `bazels3cache` will cleanly terminate itself after it has received no
-requests for 30 minutes.
-
-## Arguments for Bazel
-
-`bazels3cache` defaults to using port 7777, although bzl usually chooses a
-different port. Assuming you have it on the default port, and running on
-`localhost, start Bazel with these arguments:
-
-    bazel \
-        --host_jvm_args=-Dbazel.DigestFunction=SHA1 \
-        --remote_rest_cache=http://localhost:7777 \
-        build ...
+Also, if `idleMinutes` is greater than zero, `bazels3cache` will cleanly
+terminate itself after it has received no requests for that many minutes.
 
 ## Printing debug info to the console
 
@@ -124,10 +102,6 @@ it temporarily pauses all S3 access (for five minutes). During that time, only
 the local in-memory cache will be used. This pause will be transparent to
 Bazel.
 
-## Automatic termination
-
-After 30 minutes of inactivity, bazels3cache terminates.
-
 ## Asynchronous uploading to S3
 
 When bazels3cache receives a `PUT` (an upload request) from Bazel, it needs to
@@ -145,9 +119,9 @@ There are two ways it can handle the response to Bazel:
     acceptable.
 
 *   If asynchronous uploading is disabled (the `"asyncUpload"` section of
-    `config.default.json`, or `--asyncUpload.enabled=false` on the command line), then
-    the response code will not be sent back to Bazel until the upload to S3 has
-    completed.
+    `config.default.json`, or `--asyncUpload.enabled=false` on the command
+    line), then the response code will not be sent back to Bazel until the
+    upload to S3 has completed.
 
 ## Configuration
 

@@ -2,7 +2,7 @@
 {
   "port": 7777,
   "bucket": null, // specify this on command line or in another config file
-  "idleMinutes": 180,
+  "idleMinutes": 0, // 0 means live forever; >0 means exit automatically after idle time
   "allowOffline": true,
   "errorsBeforePausing": 3,
   "pauseMinutes": 5,
