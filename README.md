@@ -13,7 +13,7 @@ cache.
 
 *   Launch `bazels3cache` like this (by default it listens on port 7777):
 
-        bazels3cache --daemon \
+        bazels3cache \
             --bucket=MY_S3_BUCKET \
             --logging.file=$HOME/.bazels3cache.log
 
