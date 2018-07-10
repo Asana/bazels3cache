@@ -2,7 +2,7 @@
 
 `bazels3cache` is a simple web server that supports basic WebDAV (`GET`, `PUT`,
 `HEAD`, and `DELETE`), and proxies those requests through to S3. You can use it
-with `bazel --remote_http_cache=...`, so that you can use S3 for your Bazel
+with `bazel --remote_http_cache=...`, so that you can use S3 for your [Bazel](https://bazel.build)
 cache.
 
 ## Quick start
@@ -28,7 +28,7 @@ cache.
 
 ## Detailed description
 
-If you want Bazel to use S3 as its backing store, you could really use any
+If you want [Bazel](https://bazel.build) to use S3 as its backing store, you could really use any
 WebDAV-to-S3 proxy. But the key feature of `bazels3cache` that differentiates
 it from a general-purpose proxy is that if you are offline, it will report to
 Bazel that "everything is fine, I just can't find the items you're looking for
