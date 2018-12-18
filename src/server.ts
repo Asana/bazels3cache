@@ -19,8 +19,6 @@ enum StatusCode {
     MethodNotAllowed = 405,
 };
 
-const hostname = "localhost";
-
 function logProps(
     req: http.ServerRequest,
     res: http.ServerResponse,
@@ -394,11 +392,11 @@ export function startServer(s3: AWS.S3, config: Config, onDoneInitializing: () =
         process.exitCode = 1;
     });
 
-    server.listen(config.port, hostname, () => {
+    server.listen(config.port, config.host, () => {
         const logfile = path.resolve(config.logging.file);
-        debug(`started server at http://${hostname}:${config.port}/`);
-        winston.info(`started server at http://${hostname}:${config.port}/`);
-        console.log(`bazels3cache: started server at http://${hostname}:${config.port}/, logging to ${logfile}`);
+        debug(`started server at http://${config.host}:${config.port}/`);
+        winston.info(`started server at http://${config.host}:${config.port}/`);
+        console.log(`bazels3cache: started server at http://${config.host}:${config.port}/, logging to ${logfile}`);
         onDoneInitializing();
     });
 }
