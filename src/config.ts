@@ -17,6 +17,7 @@ export interface Args {
 // config file (e.g. --config=myconfig.json), and any command-line arguments
 // (e.g. --cache.maxEntrySizeBytes=1234)
 export interface Config {
+    host?: string;
     port?: number;
     idleMinutes?: number;
     bucket?: string;
