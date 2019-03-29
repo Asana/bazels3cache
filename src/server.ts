@@ -169,6 +169,13 @@ export function startServer(s3: AWS.S3, config: Config, onDoneInitializing: () =
         }
     }
 
+    function exclude(body: Buffer) {
+        if (body.length <= 50000) {
+            return body.indexOf(".o: \\") >= 0;
+        }
+        return false;
+    }
+
     // We are starting up; if there are any left-over temp files that were supposed to be
     // uploaded by the previous instance of the bazels3cache, delete them
     clearAsyncUploadCache();
@@ -219,11 +226,16 @@ export function startServer(s3: AWS.S3, config: Config, onDoneInitializing: () =
 
                     s3request
                         .then(data => {
-                            cache.maybeAdd(s3key, <Buffer>data.Body); // safe cast?
-                            sendResponse(req, res, <Buffer>data.Body, { // safe cast?
-                                startTime,
-                                awsPaused
-                            });
+                            if (exclude(<Buffer>data.Body)) {
+                                res.statusCode = StatusCode.NotFound;
+                                sendResponse(req, res, null, { startTime, awsPaused });
+                            } else {
+                                cache.maybeAdd(s3key, <Buffer>data.Body); // safe cast?
+                                sendResponse(req, res, <Buffer>data.Body, { // safe cast?
+                                    startTime,
+                                    awsPaused
+                                });
+                            }
                             onAWSSuccess();
                         })
                         .catch((err: AWS.AWSError) => {
