@@ -26,6 +26,7 @@ export interface Config {
     pauseMinutes?: number;
     socketTimeoutSeconds?: number;
     maxEntrySizeBytes?: number;
+    allowGccDepfiles?: boolean;
 
     asyncUpload?: {
         enabled?: boolean;

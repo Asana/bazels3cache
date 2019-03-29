@@ -9,6 +9,9 @@
   "pauseMinutes": 5,
   "socketTimeoutSeconds": 30, // Default is 120 seconds
   "maxEntrySizeBytes": 64000000, // max size for one item uploaded to S3; 0 means no limit
+  "allowGccDepfiles": true, // gcc depfiles often cause Bazel cross-machine build problems,
+                            // so bazels3cache can prevent them from being stored in the
+                            // remote cache
 
   "asyncUpload": {
     "enabled": true,

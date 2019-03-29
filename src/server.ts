@@ -26,6 +26,7 @@ function logProps(
         startTime: Date,
         responseLength: number,
         fromCache?: boolean,
+        isBlockedGccDepfile?: boolean,
         awsPaused: boolean
     }
 ) {
@@ -38,7 +39,8 @@ function logProps(
         attrs.responseLength,
         `${elapsedMillis}ms`,
         attrs.fromCache && "(from cache)",
-        attrs.awsPaused && "(aws paused)"
+        attrs.awsPaused && "(aws paused)",
+        attrs.isBlockedGccDepfile && "(blocked gcc depfile)"
     ]
     const logline = loglineItems
         .filter(item => ["string","number"].indexOf(typeof item) !== -1)
@@ -54,6 +56,7 @@ function sendResponse(
     attrs: {
         startTime: Date,
         fromCache?: boolean,
+        isBlockedGccDepfile?: boolean,
         awsPaused: boolean
     }
 ) {
@@ -72,7 +75,8 @@ function sendResponse(
         startTime: attrs.startTime,
         responseLength,
         fromCache: attrs.fromCache,
-        awsPaused: attrs.awsPaused
+        awsPaused: attrs.awsPaused,
+        isBlockedGccDepfile: attrs.isBlockedGccDepfile
     });
     res.end.apply(res, (body instanceof Buffer || typeof body === "string") ? [body] : []);
 }
@@ -169,6 +173,10 @@ export function startServer(s3: AWS.S3, config: Config, onDoneInitializing: () =
         }
     }
 
+    function isGccDepfile(body: Buffer) {
+        return body.length <= 100000 && body.indexOf(".o: \\") >= 0;
+    }
+
     // We are starting up; if there are any left-over temp files that were supposed to be
     // uploaded by the previous instance of the bazels3cache, delete them
     clearAsyncUploadCache();
@@ -219,11 +227,16 @@ export function startServer(s3: AWS.S3, config: Config, onDoneInitializing: () =
 
                     s3request
                         .then(data => {
-                            cache.maybeAdd(s3key, <Buffer>data.Body); // safe cast?
-                            sendResponse(req, res, <Buffer>data.Body, { // safe cast?
-                                startTime,
-                                awsPaused
-                            });
+                            if (!config.allowGccDepfiles && isGccDepfile(<Buffer>data.Body)) {
+                                res.statusCode = StatusCode.NotFound;
+                                sendResponse(req, res, null, { startTime, awsPaused, isBlockedGccDepfile: true });
+                            } else {
+                                cache.maybeAdd(s3key, <Buffer>data.Body); // safe cast?
+                                sendResponse(req, res, <Buffer>data.Body, { // safe cast?
+                                    startTime,
+                                    awsPaused
+                                });
+                            }
                             onAWSSuccess();
                         })
                         .catch((err: AWS.AWSError) => {
