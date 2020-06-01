@@ -306,6 +306,8 @@ export function startServer(s3: AWS.S3, config: Config, onDoneInitializing: () =
                                 // object, so that they can share the object with all the appropriate
                                 // users
                                 ACL: "bucket-owner-full-control"
+
+
                             }).promise();
                             s3request
                                 .then(() => {
