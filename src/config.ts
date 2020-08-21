@@ -27,7 +27,7 @@ export interface Config {
     socketTimeoutSeconds?: number;
     maxEntrySizeBytes?: number;
     allowGccDepfiles?: boolean;
-
+    s3Prefix?: string;
     asyncUpload?: {
         enabled?: boolean;
         maxPendingUploadMB?: number;
