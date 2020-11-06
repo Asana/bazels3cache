@@ -119,7 +119,7 @@ function pathToUploadCache(s3key: string, config: Config) {
 
 export function startServer(s3: AWS.S3, config: Config, onDoneInitializing: () => void) {
     const cache = new Cache(config); // in-memory cache
-    const serverStartTime = Math.floor(Date.now() - (process.uptime() * 1000));
+    const serverStartTimeMs = Math.floor(Date.now() - (process.uptime() * 1000));
     let idleTimer: NodeJS.Timer;
     let awsPauseTimer: NodeJS.Timer;
     let awsErrors = 0;
@@ -208,7 +208,8 @@ export function startServer(s3: AWS.S3, config: Config, onDoneInitializing: () =
                 if (s3key === "ping") {
                     sendResponse(req, res, "pong", { startTime, awsPaused });
                 } else if (s3key === "uptime") {
-                    sendResponse(req, res, String(Date.now() - serverStartTime), { startTime, awsPaused });
+                    // returns the server's uptime in milliseconds since the unix epoch, UTC
+                    sendResponse(req, res, String(Date.now() - serverStartTimeMs), { startTime, awsPaused });
                 } else if (s3key === "shutdown") {
                     sendResponse(req, res, "shutting down", { startTime, awsPaused });
                     shutdown("Received 'GET /shutdown'; terminating");
