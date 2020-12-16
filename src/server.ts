@@ -1,15 +1,13 @@
+import * as AWS from "aws-sdk";
 import * as fs from "fs";
 import * as http from "http";
-import * as path from "path";
-import * as AWS from "aws-sdk";
-import * as debug_ from "debug";
-import * as minimist from "minimist";
 import * as mkdirp from "mkdirp";
+import * as path from "path";
 import * as rimraf from "rimraf";
 import * as winston from "winston";
-import { Args, Config, getConfig, validateConfig } from "./config";
-import { Cache } from "./memorycache";
+import { Config } from "./config";
 import { debug } from "./debug";
+import { Cache } from "./memorycache";
 
 // just the ones we need...
 enum StatusCode {

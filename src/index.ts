@@ -1,16 +1,12 @@
-import * as fs from "fs";
-import * as child_process from "child_process";
-import * as http from "http";
-import * as https from "https";
 import * as AWS from "aws-sdk";
-import * as debug_ from "debug";
+import * as child_process from "child_process";
+import * as fs from "fs";
+import * as https from "https";
 import * as minimist from "minimist";
 import * as winston from "winston";
-import { Args, Config, getConfig, validateConfig } from "./config";
-import { Cache } from "./memorycache";
-import { debug } from "./debug";
-import { startServer } from "./server";
+import { Args, getConfig, validateConfig } from "./config";
 import { initLogging } from "./logging";
+import { startServer } from "./server";
 
 function fatalError(error: string) {
     console.error(`bazels3cache: ${error}`); // the user should see this
