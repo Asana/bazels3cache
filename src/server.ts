@@ -45,7 +45,7 @@ function logProps(
     const logline = loglineItems
         .filter(item => ["string","number"].indexOf(typeof item) !== -1)
         .join(" ");
-    debug(logline);    
+    debug(logline);
     winston.info(logline);
 }
 
