@@ -20,7 +20,7 @@ enum StatusCode {
 };
 
 function logProps(
-    req: http.ServerRequest,
+    req: http.IncomingMessage,
     res: http.ServerResponse,
     attrs: {
         startTime: Date,
@@ -50,7 +50,7 @@ function logProps(
 }
 
 function sendResponse(
-    req: http.ServerRequest,
+    req: http.IncomingMessage,
     res: http.ServerResponse,
     body: Buffer | string | number,
     attrs: {
@@ -78,7 +78,11 @@ function sendResponse(
         awsPaused: attrs.awsPaused,
         isBlockedGccDepfile: attrs.isBlockedGccDepfile
     });
-    res.end.apply(res, (body instanceof Buffer || typeof body === "string") ? [body] : []);
+    if (!res.writableEnded) { 
+        res.end.apply(res, (body instanceof Buffer || typeof body === "string") ? [body] : []);
+    } else {
+        winston.warn("Client closed connection before we could respond.")
+    }
 }
 
 function isIgnorableError(err: AWS.AWSError) {
@@ -125,7 +129,7 @@ export function startServer(s3: AWS.S3, config: Config, onDoneInitializing: () =
     let awsPaused = false;
     let pendingUploadBytes = 0;
 
-    function onAWSError(req: http.ServerRequest, s3error: AWS.AWSError) {
+    function onAWSError(req: http.IncomingMessage, s3error: AWS.AWSError) {
         const message = `${req.method} ${req.url}: ${s3error.message || s3error.code}`;
         debug(message);
         winston.error(message);
@@ -181,7 +185,7 @@ export function startServer(s3: AWS.S3, config: Config, onDoneInitializing: () =
     // uploaded by the previous instance of the bazels3cache, delete them
     clearAsyncUploadCache();
 
-    const server = http.createServer((req: http.ServerRequest, res: http.ServerResponse) => {
+    const server = http.createServer((req: http.IncomingMessage, res: http.ServerResponse) => {
         res.setTimeout(config.socketTimeoutSeconds * 1000, () => {
             // Oh well, we can't wait forever bail out on this request and close the socket
             winston.warn("Socket timeout reached. Returning NotFound");
