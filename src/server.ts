@@ -78,7 +78,7 @@ function sendResponse(
         awsPaused: attrs.awsPaused,
         isBlockedGccDepfile: attrs.isBlockedGccDepfile
     });
-    if(!res.writableEnded) { 
+    if (!res.writableEnded) { 
         res.end.apply(res, (body instanceof Buffer || typeof body === "string") ? [body] : []);
     } else {
         winston.warn("Client closed connection before we could respond.")
