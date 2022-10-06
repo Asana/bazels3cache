@@ -25,6 +25,7 @@ export interface Config {
     errorsBeforePausing?: number;
     pauseMinutes?: number;
     socketTimeoutSeconds?: number;
+    maxSockets?: number;
     maxEntrySizeBytes?: number;
     allowGccDepfiles?: boolean;
 

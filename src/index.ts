@@ -35,7 +35,8 @@ function daemonMain(args: Args, onDoneInitializing: () => void) {
                 httpOptions: {
                     agent: new https.Agent({
                         keepAlive: true,
-                        keepAliveMsecs: 60000
+                        keepAliveMsecs: 60000,
+                        maxSockets: config.maxSockets
                     })
                 },
                 credentials: credentials
