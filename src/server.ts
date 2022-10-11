@@ -197,7 +197,7 @@ export function startServer(s3: AWS.S3, config: Config, onDoneInitializing: () =
             // Oh well, we can't wait forever bail out on this request and close the socket
             winston.warn("Socket timeout reached. Returning NotFound");
             res.statusCode = StatusCode.NotFound;
-            sendResponse(req, res, null, {startTime, awsPaused });
+            sendResponse(req, res, null, {startTime, s3RequestDurationMs: 0, awsPaused });
         });
 
         if (idleTimer) {
@@ -216,9 +216,9 @@ export function startServer(s3: AWS.S3, config: Config, onDoneInitializing: () =
         switch (req.method) {
             case "GET": {
                 if (s3key === "ping") {
-                    sendResponse(req, res, "pong", { startTime, awsPaused });
+                    sendResponse(req, res, "pong", { startTime, s3RequestDurationMs: 0, awsPaused });
                 } else if (s3key === "shutdown") {
-                    sendResponse(req, res, "shutting down", { startTime, awsPaused });
+                    sendResponse(req, res, "shutting down", { startTime, s3RequestDurationMs: 0, awsPaused });
                     shutdown("Received 'GET /shutdown'; terminating");
                 } else if (cache.contains(s3key)) {
                     // we already have it in our in-memory cache
