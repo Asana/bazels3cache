@@ -1,4 +1,8 @@
-# Web server for proxying Bazel remote cache requests to S3
+# [DEPRECATED] This project is no longer maintained
+
+As of December 2022, Asana is no longer using bazels3cache internally. See [the Bazel documentation](https://bazel.build/remote/caching#cache-backend) for potential alternatives.
+
+# Web server for proxying Bazel remote cache requests to S3.
 
 `bazels3cache` is a simple web server that supports basic WebDAV (`GET`, `PUT`,
 `HEAD`, and `DELETE`), and proxies those requests through to S3. You can use it
