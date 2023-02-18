@@ -308,7 +308,7 @@ export function startServer(s3: AWS.S3, config: Config, onDoneInitializing: () =
                             res.statusCode = StatusCode.OK; // tell Bazel the PUT succeeded
                             sendResponse(req, res, size, { startTime, s3RequestDurationMs: 0, awsPaused });
                             safeUnlinkSync(pth);
-                        } else if (pendingUploadBytes + size > config.asyncUpload.maxPendingUploadMB * 1024 * 1024) {
+                        } else if (config.asyncUpload.enabled && pendingUploadBytes + size > config.asyncUpload.maxPendingUploadMB * 1024 * 1024) {
                             winston.info(`Not uploading ${s3key}, because there are already too many pending uploads`);
                             res.statusCode = StatusCode.OK; // tell Bazel the PUT succeeded
                             sendResponse(req, res, size, { startTime, s3RequestDurationMs: 0, awsPaused });
